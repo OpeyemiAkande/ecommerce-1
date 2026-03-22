@@ -1,8 +1,6 @@
 import dotenv from "dotenv";
 
 const result = dotenv.config({quiet: true});
-// console.log(result);
-console.log(result);
 
 export const ENV = {
   NODE_ENV: process.env.NODE_ENV,
