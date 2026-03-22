@@ -7,14 +7,14 @@ import cors from "cors";
 // import {functions, ingest} from "./config/ingest.js";
 
 import {ENV} from "./config/env.js";
-// import {connectDB} from "./config/db.js";
+import {connectDB} from "./config/db.js";
 
 const app = express();
 
 const __dirname = path.resolve();
 
 app.use(express.json());
-// app.use(clerkMiddleware());
+app.use(clerkMiddleware()); // adds auth object under the req => req.auth
 // app.use(cors)
 
 app.get("/api/health", (req, res) => {
@@ -30,7 +30,7 @@ if (ENV.NODE_ENV === "production") {
 }
 
 const startServer = async () => {
-  // await connectDB();
+  await connectDB();
   app.listen(ENV.PORT, () => {
     console.log("Server is up and running");
     console.log(ENV.PORT);
