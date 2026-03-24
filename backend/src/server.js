@@ -4,7 +4,7 @@ import {clerkMiddleware} from "@clerk/express";
 import {serve} from "inngest/express";
 import cors from "cors";
 
-import {functions, ingest} from "./config/ingest.js";
+import {functions, inngest} from "./config/inngest.js";
 
 import {ENV} from "./config/env.js";
 import {connectDB} from "./config/db.js";
