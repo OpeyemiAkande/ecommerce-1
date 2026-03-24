@@ -4,7 +4,7 @@ import {clerkMiddleware} from "@clerk/express";
 import {serve} from "inngest/express";
 import cors from "cors";
 
-// import {functions, ingest} from "./config/ingest.js";
+import {functions, ingest} from "./config/ingest.js";
 
 import {ENV} from "./config/env.js";
 import {connectDB} from "./config/db.js";
@@ -16,6 +16,8 @@ const __dirname = path.resolve();
 app.use(express.json());
 app.use(clerkMiddleware()); // adds auth object under the req => req.auth
 // app.use(cors)
+
+app.use("/api/inngest", serve({client: inngest, functions}));
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({message: "Success"});
