@@ -21,6 +21,11 @@ const syncUser = inngest.createFunction(
     };
 
     await User.create(newUser);
+
+    await User.findOneAndUpdate({clerkId: id}, newUser, {
+      upsert: true,
+      new: true
+    });
   }
 );
 
