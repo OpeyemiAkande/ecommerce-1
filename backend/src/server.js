@@ -23,15 +23,10 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({message: "Success"});
 });
 
-// Root route (VERY IMPORTANT)
-app.get("/", (req, res) => {
-  res.status(200).send("Server is running");
-});
-
 if (ENV.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../admin/dist")));
 
-  app.get("*", (req, res) => {
+  app.get("/{*any}", (req, res) => {
     res.sendFile(path.join(__dirname, "../admin", "dist", "index.html"));
   });
 }
