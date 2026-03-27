@@ -1,4 +1,4 @@
-import {User} from "../models/user.model";
+import {User} from "../models/user.model.js";
 
 export async function addAddress(req, res) {
   try {
@@ -43,6 +43,16 @@ export async function addAddress(req, res) {
   } catch (error) {
     console.error(error);
     res.status(500).json({error: "Internal server error"});
+  }
+}
+
+export async function getAddresses(req, res) {
+  try {
+    const user = req.user;
+
+    res.status(200).json({addresses: user.addresses});
+  } catch (error) {
+    console.error("Error in addresses");
   }
 }
 
