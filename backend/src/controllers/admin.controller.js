@@ -96,11 +96,10 @@ export async function updateProduct(req, res) {
 
 export async function getAllOrders(_, res) {
   try {
-    const orders = (
-      await Order.find()
-        .populate("user", "name email")
-        .populate("orderItems.product")
-    ).toSorted({createdAt: -1});
+    const orders = await Order.find()
+      .sort({createdAt: -1})
+      .populate("user", "name email")
+      .populate("orderItems.product");
 
     res.status(200).json({orders});
   } catch (error) {
