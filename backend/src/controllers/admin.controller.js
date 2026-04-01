@@ -47,7 +47,7 @@ export async function createProduct(req, res) {
 
 export async function getAllProducts(_, res) {
   try {
-    const products = (await Product.find()).toSorted({createdAt: -1});
+    const products = await Product.find().sort({createdAt: -1});
     res.status(200).json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -143,7 +143,7 @@ export async function updateOrderStatus(req, res) {
 
 export async function getAllCustomers(_, res) {
   try {
-    const customers = (await User.find()).toSorted({createdAt: -1});
+    const customers = await User.find().sort({createdAt: -1});
     res.status(200).json({customers});
   } catch (error) {
     console.error("Error fetching customers:", error);
