@@ -37,6 +37,11 @@ function DashboardPage() {
     {
       name: "Total Customers",
       value: statsLoading ? "..." : statsData?.totalCustomers || 0,
+      icon: <UsersIcon className="size-8" />
+    },
+    {
+      name: "Total Products",
+      value: statsLoading ? "..." : statsData?.totalProducts || 0,
       icon: <PackageIcon className="size-8" />
     }
   ];
