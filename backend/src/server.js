@@ -15,6 +15,7 @@ import orderRoutes from "./routes/order.route.js";
 import cartRoutes from "./routes/cart.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import paymentRoutes from "./routes/payment.route.js";
+import productsRoutes from "./routes/product.route.js";
 
 const app = express();
 
@@ -36,6 +37,8 @@ app.use(express.json());
 app.use(clerkMiddleware()); // adds auth object under the req => req.auth
 app.use(cors({origin: ENV.CLIENT_URL, credentials: true}));
 
+app.use(cors({origin: ENV.CLIENT_URL, credentials: true}));
+
 app.use("/api/inngest", serve({client: inngest, functions}));
 
 app.use("/api/admin", adminRoutes);
@@ -43,6 +46,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/review", reviewRoutes);
+app.use("/api/products", productsRoutes);
 app.use("/api/payments", paymentRoutes);
 
 app.get("/api/health", (req, res) => {

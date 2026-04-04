@@ -127,12 +127,16 @@ export async function addToWishlist(req, res) {
     const {productId} = req.body;
     const user = req.user;
 
+    // console.log("****************************************");
+    // console.log(user.wishlist, productId);
+    // console.log("****************************************");
     if (user.wishlist.includes(productId)) {
       return res.status(400).json({error: "Product already in wishlist"});
     }
 
     user.wishlist.push(productId);
     await user.save();
+    res.status(200).json({message: "Successfully added to wishlist"});
   } catch (error) {
     console.error("Error in addToWishlist controller: ", error);
     res.status(500).json({error: "Internal server error"});
@@ -151,7 +155,7 @@ export async function removeFromWishlist(req, res) {
     user.wishlist.pull(productId);
     await user.save();
 
-    res.status(200).json;
+    res.status(200).json({wishlist: user.wishlist});
   } catch (error) {
     console.error("Error in removeFromWishlist controller: ", error);
     res.status(500).json({error: "Internal server error"});
