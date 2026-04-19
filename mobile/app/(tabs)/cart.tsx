@@ -8,10 +8,10 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Linking
 } from "react-native";
-import {useStripe} from "@stripe/stripe-react-native";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {Address} from "@/types";
 import {Ionicons} from "@expo/vector-icons";
 import {Image} from "expo-image";
@@ -19,6 +19,7 @@ import OrderSummary from "@/components/OrderSummary";
 import AddressSelectionModal from "@/components/AddressSelectionModal";
 
 import * as Sentry from "@sentry/react-native";
+import {usePayment} from "@/context/PaymentContext";
 
 const CartScreen = () => {
   const api = useApi();
@@ -35,8 +36,7 @@ const CartScreen = () => {
     updateQuantity
   } = useCart();
   const {addresses} = useAddresses();
-
-  const {initPaymentSheet, presentPaymentSheet} = useStripe();
+  const {payment, setPayment, reset} = usePayment();
 
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [addressModalVisible, setAddressModalVisible] = useState(false);
@@ -83,9 +83,51 @@ const CartScreen = () => {
     setAddressModalVisible(true);
   };
 
-  const handleProceedWithPayment = async (selectAddress: Address) => {
-    console.log("handling payments");
+  const handleProceedWithPayment = async (selectedAddress: Address) => {
+    setAddressModalVisible(false);
+    // Sentry setup
+
+    try {
+      setPaymentLoading(true);
+
+      const {data} = await api.post("/payments/initialize-payment", {
+        cartItems,
+        shippingAddress: {
+          fullName: selectedAddress.fullName,
+          streetAddress: selectedAddress.streetAddress,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          zipCode: selectedAddress.zipCode,
+          phoneNumber: selectedAddress.phoneNumber
+        }
+      });
+      setPayment({status: "pending", reference: null}); // ✅
+
+      const {authorization_url} = data;
+      await Linking.openURL(authorization_url);
+    } catch (error: any) {
+      setPaymentLoading(false);
+      Alert.alert("Error", error.response.data.error);
+    }
   };
+
+  useEffect(() => {
+    if (!payment) return;
+
+    if ((payment as any).status === "success") {
+      setPaymentLoading(false);
+      Alert.alert(
+        "Success",
+        "Your payment was successful! Your order is being processed.",
+        [{text: "OK", onPress: () => {}}]
+      );
+      clearCart();
+    }
+
+    if ((payment as any).status === "failed") {
+      Alert.alert("Payment failed");
+    }
+  }, [payment]);
 
   if (isLoading) return <LoadingUI />;
   if (isError) return <ErrorUI />;
@@ -120,7 +162,7 @@ const CartScreen = () => {
                   />
                   <View className="absolute top-2 right-2 bg-primary rounded-full px-2 py-0.5">
                     <Text className="text-background text-xs font-bold">
-                      {item.quantity}
+                      x{item.quantity}
                     </Text>
                   </View>
                 </View>

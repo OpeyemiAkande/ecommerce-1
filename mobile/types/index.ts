@@ -24,6 +24,39 @@ export interface Address {
   isDefault: boolean;
 }
 
+export interface Order {
+  _id: string;
+  user: string;
+  clerkId: string;
+  orderItems: OrderItem[];
+  shippingAddress: {
+    fullName: string;
+    streetAddress: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    phoneNumber: string;
+  };
+  paymentResult: {
+    id: string;
+    status: string;
+  };
+  totalPrice: number;
+  status: "pending" | "shipped" | "delivered";
+  hasReviewed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrderItem {
+  _id: string;
+  product: Product;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
 export interface CartItem {
   _id: string;
   product: Product;

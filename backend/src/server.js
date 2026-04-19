@@ -22,9 +22,9 @@ const app = express();
 const __dirname = path.resolve();
 
 app.use(
-  "/api/payment",
+  "/api/payments",
   (req, res, next) => {
-    if (req.originalUrl === "/api/payment/webhook") {
+    if (req.originalUrl === "/api/paystack/webhook") {
       express.raw({type: "application/json"})(req, res, next);
     } else {
       express.json()(req, res, next);

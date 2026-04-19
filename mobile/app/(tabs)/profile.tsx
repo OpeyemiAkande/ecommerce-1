@@ -137,7 +137,11 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity className="mx-6 mb-3 bg-surface rounded-2xl py-5 flex-row items-center justify-center border-2 border-red-500/20">
+        <TouchableOpacity
+          className="mx-6 mb-3 bg-surface rounded-2xl py-5 flex-row items-center justify-center border-2 border-red-500/20"
+          activeOpacity={0.8}
+          onPress={() => signOut()}
+        >
           <Ionicons name="log-out-outline" size={22} color="#ef4444" />
           <Text className="text-red-500 font-bold text-base ml-2">
             Sign Out

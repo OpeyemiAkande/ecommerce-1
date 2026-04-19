@@ -29,6 +29,7 @@ export async function initializePayment(req, res) {
       }
 
       if (product.stock < item.quantity) {
+        console.log("Stock is less than quantity");
         return res
           .status(400)
           .json({error: `Insufficient stock for ${product.name}`});
@@ -50,6 +51,7 @@ export async function initializePayment(req, res) {
     const total = subtotal + shipping + tax;
 
     if (total <= 0) {
+      console.log("invalid order");
       return res.status(400).json({error: "Invalid order total"});
     }
 
@@ -58,6 +60,7 @@ export async function initializePayment(req, res) {
 
     // 🧠 Generate unique reference (VERY IMPORTANT)
     const reference = `order_${Date.now()}_${user._id}`;
+    console.log(shippingAddress);
 
     // 🧠 Store pending order BEFORE payment (recommended)
     await Order.create({
@@ -85,7 +88,7 @@ export async function initializePayment(req, res) {
           shippingAddress,
           totalPrice: total
         },
-        callback_url: `${ENV.CLIENT_URL}/payment-success`
+        callback_url: `${ENV.NGROK_URL}/payments/payment-success?reference=${reference}`
       },
       {
         headers: {
@@ -94,6 +97,7 @@ export async function initializePayment(req, res) {
         }
       }
     );
+    console.log(response);
 
     res.status(200).json({
       authorization_url: response.data.data.authorization_url,
@@ -106,6 +110,7 @@ export async function initializePayment(req, res) {
 }
 
 export async function verifyPayment(req, res) {
+  console.log("verifying payment");
   try {
     const {reference} = req.params;
 
@@ -126,10 +131,11 @@ export async function verifyPayment(req, res) {
 
     // Idempotency check
     const existingOrder = await Order.findOne({"paymentResult.id": reference});
+    console.log(reference);
 
-    // if (!existingOrder) {
-    //   return res.status(404).json({error: "Order not found"});
-    // }
+    if (!existingOrder) {
+      return res.status(404).json({error: "Order not found"});
+    }
 
     if (existingOrder.paymentResult.status === "succeeded") {
       return res.json({message: "Already processed"});
@@ -139,14 +145,7 @@ export async function verifyPayment(req, res) {
     existingOrder.paymentResult.status = "succeeded";
     await existingOrder.save();
 
-    // Reduce stock
-    for (const item of existingOrder.orderItems) {
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: {stock: -item.quantity}
-      });
-    }
-
-    res.json({message: "Payment verified successfully"});
+    res.status(200).json({message: "Payment verified successfully"});
   } catch (error) {
     console.error("Verification error:", error);
     res.status(500).json({error: "Payment verification failed"});
@@ -154,6 +153,7 @@ export async function verifyPayment(req, res) {
 }
 
 export async function handlePaystackWebhook(req, res) {
+  console.log();
   const hash = crypto
     .createHmac("sha512", ENV.PAYSTACK_SECRET_KEY)
     .update(JSON.stringify(req.body))
@@ -201,4 +201,11 @@ export async function handlePaystackWebhook(req, res) {
   }
 
   res.sendStatus(200);
+}
+
+export async function handlePaymentSuccess(req, res) {
+  const {reference} = req.query;
+
+  // Redirect to your app
+  res.redirect(`exp://192.168.0.173:8081/--/cart?reference=${reference}`);
 }
