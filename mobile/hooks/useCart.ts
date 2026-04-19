@@ -43,12 +43,16 @@ const useCart = () => {
       productId: string;
       quantity: number;
     }) => {
-      const {data} = await api.put<{cart: Cart}>(`/cart${productId}`, {
+      console.log("updating quantity");
+      const {data} = await api.put<{cart: Cart}>(`/cart/${productId}`, {
         quantity
       });
       return data.cart;
     },
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ["cart"]})
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ["cart"]}),
+    onError: (error: any) => {
+      console.log("Error updating quantity: ", error.response.data);
+    }
   });
 
   const removeFromCartMutation = useMutation({

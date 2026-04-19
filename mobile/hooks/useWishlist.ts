@@ -1,6 +1,7 @@
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {useApi} from "@/lib/api";
 import {Product} from "@/types";
+import {Alert} from "react-native";
 
 const useWishlist = () => {
   const api = useApi();
@@ -27,8 +28,12 @@ const useWishlist = () => {
       return data.wishlist;
     },
     onSuccess: () => queryClient.invalidateQueries({queryKey: ["wishlist"]}),
-    onError: (error) => {
-      console.log("Add to wishlist error", error);
+    onError: (error: any) => {
+      Alert.alert(
+        "Error",
+        error.response.data.error || "Failed to add to wishlist"
+      );
+      console.log("Add to wishlist error", error.response.data.error);
     }
   });
 

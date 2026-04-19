@@ -28,6 +28,7 @@ const ProductsGrid = ({products, isLoading, isError}: ProductsGridProps) => {
     isRemovingFromWishlist
   } = useWishlist();
   const [wishlistedId, setWishlistedId] = useState("");
+  const [addCartItemId, setAddCartItemId] = useState("");
 
   const {isAddingToCart, addToCart} = useCart();
 
@@ -46,6 +47,9 @@ const ProductsGrid = ({products, isLoading, isError}: ProductsGridProps) => {
         }
       }
     );
+    if (addCartItemId !== productId) {
+      setAddCartItemId(productId);
+    }
   };
 
   const handleWishlistToggle = (productId: string) => {
@@ -119,7 +123,7 @@ const ProductsGrid = ({products, isLoading, isError}: ProductsGridProps) => {
             onPress={() => handleAddToCart(product._id, product.name)}
             disabled={isAddingToCart}
           >
-            {isAddingToCart ? (
+            {isAddingToCart && addCartItemId === product._id ? (
               <ActivityIndicator size="small" color="#121212" />
             ) : (
               <Ionicons name="add" size={18} color="#121212" />

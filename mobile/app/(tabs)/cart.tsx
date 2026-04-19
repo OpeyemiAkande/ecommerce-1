@@ -53,6 +53,7 @@ const CartScreen = () => {
     change: number
   ) => {
     const newQuantity = currentQuantity + change;
+    console.log(newQuantity);
     if (newQuantity < 1) return;
     updateQuantity({productId, quantity: newQuantity});
   };

@@ -75,6 +75,7 @@ export async function updateCartItem(req, res) {
   try {
     const {productId} = req.params;
     const {quantity} = req.body;
+    console.log("Quantity is: ", quantity);
 
     if (quantity < 1) {
       return res.status(400).json({error: "Quantity must be at least 1"});
