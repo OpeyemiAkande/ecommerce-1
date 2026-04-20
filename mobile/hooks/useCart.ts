@@ -1,6 +1,7 @@
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {useApi} from "@/lib/api";
 import {Cart} from "@/types";
+import {Alert} from "react-native";
 
 const useCart = () => {
   const api = useApi();
@@ -32,7 +33,11 @@ const useCart = () => {
       });
       return data.cart;
     },
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ["cart"]})
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ["cart"]}),
+    onError: (error: any) => {
+      Alert.alert("Error", "Failed to add item to cart");
+      console.log("Error adding to cart: ", error.response.data);
+    }
   });
 
   const updateQuantityMutation = useMutation({
@@ -43,7 +48,6 @@ const useCart = () => {
       productId: string;
       quantity: number;
     }) => {
-      console.log("updating quantity");
       const {data} = await api.put<{cart: Cart}>(`/cart/${productId}`, {
         quantity
       });
@@ -51,6 +55,7 @@ const useCart = () => {
     },
     onSuccess: () => queryClient.invalidateQueries({queryKey: ["cart"]}),
     onError: (error: any) => {
+      Alert.alert("Error", "Failed to update quantity");
       console.log("Error updating quantity: ", error.response.data);
     }
   });
@@ -60,7 +65,11 @@ const useCart = () => {
       const {data} = await api.delete<{cart: Cart}>(`/cart/${productId}`);
       return data.cart;
     },
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ["cart"]})
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ["cart"]}),
+    onError: (error: any) => {
+      Alert.alert("Error", "Failed to remove item from cart");
+      console.log("Error removing from cart: ", error.response.data);
+    }
   });
 
   const clearCartMutation = useMutation({
@@ -69,7 +78,11 @@ const useCart = () => {
 
       return data.cart;
     },
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ["cart"]})
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ["cart"]}),
+    onError: (error: any) => {
+      Alert.alert("Error", "Failed to clear cart");
+      console.log("Error clearing cart: ", error.response.data);
+    }
   });
 
   const cartTotal =
