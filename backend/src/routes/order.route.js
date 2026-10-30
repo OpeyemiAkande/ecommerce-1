@@ -1,10 +1,11 @@
 import {Router} from "express";
 import {protectRoute} from "../middleware/auth.middleware.js";
-import {createOrder, getUserOrders} from "../controllers/order.controller.js";
+import {getUserOrders} from "../controllers/order.controller.js";
 
 const router = Router();
 
-router.post("/", protectRoute, createOrder);
+// Orders are created only by the payment flow (see payment.controller.js),
+// never directly by a client.
 router.get("/", protectRoute, getUserOrders);
 
 export default router;
