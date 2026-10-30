@@ -1,14 +1,29 @@
+"use client";
+
+import type {FormEvent} from "react";
 import {IoSearch} from "react-icons/io5";
 
+// Controlled: the parent decides what typing does (filter) and what submitting
+// does (fetch). The action/method keep it working as a plain GET form too.
 export function SearchForm({
-  defaultValue,
+  value,
+  onChange,
+  onSubmit,
   category
 }: {
-  defaultValue?: string;
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   category?: string;
 }) {
   return (
-    <form action="/products" method="get" role="search" className="flex gap-2">
+    <form
+      action="/products"
+      method="get"
+      role="search"
+      onSubmit={onSubmit}
+      className="flex gap-2"
+    >
       <div className="relative flex-1">
         <IoSearch
           size={22}
@@ -17,14 +32,17 @@ export function SearchForm({
         <input
           type="search"
           name="q"
-          defaultValue={defaultValue}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
           placeholder="Search for products"
           aria-label="Search for products"
           className="input pl-14"
         />
       </div>
       {category && <input type="hidden" name="category" value={category} />}
-      <button className="btn-primary hidden sm:inline-flex">Search</button>
+      <button type="submit" className="btn-primary hidden sm:inline-flex">
+        Search
+      </button>
     </form>
   );
 }
