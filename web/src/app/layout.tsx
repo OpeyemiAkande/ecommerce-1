@@ -1,6 +1,5 @@
 import type {Metadata} from "next";
 import {ClerkProvider} from "@clerk/nextjs";
-import {Header} from "@/components/Header";
 import {Providers} from "@/components/Providers";
 import {SITE_URL, STORE_NAME} from "@/lib/config";
 import "./globals.css";
@@ -33,12 +32,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <ClerkProvider appearance={clerkAppearance}>
       <html lang="en">
         <body className="min-h-screen">
-          <Providers>
-            <Header />
-            <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-              {children}
-            </main>
-          </Providers>
+          <Providers>{children}</Providers>
         </body>
       </html>
     </ClerkProvider>

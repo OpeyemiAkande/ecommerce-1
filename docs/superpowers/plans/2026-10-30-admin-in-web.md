@@ -50,11 +50,13 @@ Spec: `docs/superpowers/specs/2026-10-30-admin-in-web-design.md`
 **Interfaces:**
 - Produces: `StoreChrome({children})` used by Task 1 only; later tasks never touch the storefront chrome.
 
-- [ ] **Step 1: Create the branch and record the baseline**
+- [ ] **Step 1: Confirm the branch and record the baseline**
+
+The branch `feature/web-admin` already exists (created from `feature/web-storefront`).
 
 ```bash
-cd web && git switch -c feature/admin-in-web
-npm test && npm run typecheck && npm run lint
+git branch --show-current   # feature/web-admin
+cd web && npm test && npm run typecheck && npm run lint
 ```
 Expected: 56 tests pass, typecheck and lint clean.
 
