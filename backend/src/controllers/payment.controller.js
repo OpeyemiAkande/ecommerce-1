@@ -1,11 +1,39 @@
 import axios from "axios";
 import {ENV} from "../config/env.js";
-import {User} from "../models/user.model.js";
 import {Product} from "../models/product.model.js";
 import {Order} from "../models/order.model.js";
 import crypto from "crypto";
+import {
+  calculateTotal,
+  isValidQuantity,
+  reserveStock
+} from "../lib/pricing.js";
 
 const PAYSTACK_BASE_URL = "https://api.paystack.co";
+
+// Flips pending -> succeeded in one atomic step so that verify-payment and the
+// webhook can't both fulfil the same order (and decrement stock twice).
+async function fulfillOrder(reference) {
+  const order = await Order.findOneAndUpdate(
+    {"paymentResult.id": reference, "paymentResult.status": "pending"},
+    {$set: {"paymentResult.status": "succeeded"}},
+    {new: true}
+  );
+
+  if (!order) return null;
+
+  for (const item of order.orderItems) {
+    const reserved = await reserveStock(item.product, item.quantity);
+    if (!reserved) {
+      // Paid for stock that has since sold out; needs manual follow-up.
+      console.error(
+        `Oversold: order ${order._id}, product ${item.product}, qty ${item.quantity}`
+      );
+    }
+  }
+
+  return order;
+}
 
 export async function initializePayment(req, res) {
   try {
@@ -20,12 +48,16 @@ export async function initializePayment(req, res) {
     const validatedItems = [];
 
     for (const item of cartItems) {
-      const product = await Product.findById(item.product._id);
+      if (!isValidQuantity(item.quantity)) {
+        return res.status(400).json({error: "Invalid item quantity"});
+      }
+
+      const product = await Product.findById(item.product?._id);
 
       if (!product) {
         return res
           .status(404)
-          .json({error: `Product ${item.product.name} not found`});
+          .json({error: `Product ${item.product?.name} not found`});
       }
 
       if (product.stock < item.quantity) {
@@ -45,22 +77,19 @@ export async function initializePayment(req, res) {
       });
     }
 
-    const shipping = 10.0;
-    const tax = subtotal * 0.08;
-    const total = subtotal + shipping + tax;
+    const total = calculateTotal(subtotal);
 
     if (total <= 0) {
       return res.status(400).json({error: "Invalid order total"});
     }
 
-    // 🔑 Paystack expects amount in kobo (NGN * 100)
+    // Paystack expects the amount in the subunit (kobo for NGN)
     const amount = Math.round(total * 100);
 
-    // 🧠 Generate unique reference (VERY IMPORTANT)
     const reference = `order_${Date.now()}_${user._id}`;
 
-    // 🧠 Store pending order BEFORE payment (recommended)
-    await Order.create({
+    // Store the pending order before payment so verify/webhook can find it
+    const order = await Order.create({
       user: user._id,
       clerkId: user.clerkId,
       orderItems: validatedItems,
@@ -72,42 +101,67 @@ export async function initializePayment(req, res) {
       totalPrice: total
     });
 
-    const response = await axios.post(
-      `${PAYSTACK_BASE_URL}/transaction/initialize`,
-      {
-        email: user.email,
-        amount,
-        reference,
-        metadata: {
-          userId: user._id.toString(),
-          clerkId: user.clerkId,
-          orderItems: validatedItems,
-          shippingAddress,
-          totalPrice: total
+    let response;
+    try {
+      response = await axios.post(
+        `${PAYSTACK_BASE_URL}/transaction/initialize`,
+        {
+          email: user.email,
+          amount,
+          reference,
+          metadata: {
+            userId: user._id.toString(),
+            clerkId: user.clerkId,
+            orderItems: validatedItems,
+            shippingAddress,
+            totalPrice: total
+          },
+          callback_url: `${ENV.NGROK_URL}/api/payments/payment-success?reference=${reference}`
         },
-        callback_url: `${ENV.CLIENT_URL}/payment-success`
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${ENV.PAYSTACK_SECRET_KEY}`,
-          "Content-Type": "application/json"
+        {
+          headers: {
+            Authorization: `Bearer ${ENV.PAYSTACK_SECRET_KEY}`,
+            "Content-Type": "application/json"
+          }
         }
-      }
-    );
+      );
+    } catch (error) {
+      // Don't leave an orphaned pending order behind
+      await Order.findByIdAndDelete(order._id);
+      throw error;
+    }
 
     res.status(200).json({
       authorization_url: response.data.data.authorization_url,
       reference
     });
   } catch (error) {
-    console.error("Error initializing payment:", error);
+    console.error("Error initializing payment:", error.message);
     res.status(500).json({error: "Failed to initialize payment"});
   }
 }
 
 export async function verifyPayment(req, res) {
   try {
-    const {reference} = req.params;
+    const reference = req.params.reference ?? req.body?.reference;
+
+    if (!reference) {
+      return res.status(400).json({error: "Payment reference is required"});
+    }
+
+    const existingOrder = await Order.findOne({"paymentResult.id": reference});
+
+    if (!existingOrder) {
+      return res.status(404).json({error: "Order not found"});
+    }
+
+    if (existingOrder.clerkId !== req.user.clerkId) {
+      return res.status(403).json({error: "Not authorized to verify this order"});
+    }
+
+    if (existingOrder.paymentResult.status === "succeeded") {
+      return res.status(200).json({message: "Already processed"});
+    }
 
     const response = await axios.get(
       `${PAYSTACK_BASE_URL}/transaction/verify/${reference}`,
@@ -124,81 +178,50 @@ export async function verifyPayment(req, res) {
       return res.status(400).json({error: "Payment not successful"});
     }
 
-    // Idempotency check
-    const existingOrder = await Order.findOne({"paymentResult.id": reference});
-
-    // if (!existingOrder) {
-    //   return res.status(404).json({error: "Order not found"});
-    // }
-
-    if (existingOrder.paymentResult.status === "succeeded") {
-      return res.json({message: "Already processed"});
+    if (data.amount !== Math.round(existingOrder.totalPrice * 100)) {
+      return res.status(400).json({error: "Payment amount mismatch"});
     }
 
-    // Update order
-    existingOrder.paymentResult.status = "succeeded";
-    await existingOrder.save();
+    await fulfillOrder(reference);
 
-    // Reduce stock
-    for (const item of existingOrder.orderItems) {
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: {stock: -item.quantity}
-      });
-    }
-
-    res.json({message: "Payment verified successfully"});
+    res.status(200).json({message: "Payment verified successfully"});
   } catch (error) {
-    console.error("Verification error:", error);
+    console.error("Verification error:", error.message);
     res.status(500).json({error: "Payment verification failed"});
   }
 }
 
+// Mounted with express.raw in server.js: the signature is computed over the
+// exact bytes Paystack sent, so req.body is a Buffer here.
 export async function handlePaystackWebhook(req, res) {
   const hash = crypto
     .createHmac("sha512", ENV.PAYSTACK_SECRET_KEY)
-    .update(JSON.stringify(req.body))
+    .update(req.body)
     .digest("hex");
 
   if (hash !== req.headers["x-paystack-signature"]) {
     return res.status(400).send("Invalid signature");
   }
 
-  const event = req.body;
+  try {
+    const event = JSON.parse(req.body.toString("utf8"));
 
-  if (event.event === "charge.success") {
-    const data = event.data;
-    const reference = data.reference;
+    if (event.event === "charge.success") {
+      const reference = event.data.reference;
+      const order = await fulfillOrder(reference);
 
-    console.log("Payment success:", reference);
-
-    try {
-      const existingOrder = await Order.findOne({
-        "paymentResult.id": reference
-      });
-
-      if (!existingOrder) {
-        console.log("Order not found for reference:", reference);
-        return res.sendStatus(200);
-      }
-
-      if (existingOrder.paymentResult.status === "succeeded") {
-        return res.sendStatus(200); // idempotent
-      }
-
-      existingOrder.paymentResult.status = "succeeded";
-      await existingOrder.save();
-
-      for (const item of existingOrder.orderItems) {
-        await Product.findByIdAndUpdate(item.product, {
-          $inc: {stock: -item.quantity}
-        });
-      }
-
-      console.log("Order fulfilled:", existingOrder._id);
-    } catch (error) {
-      console.error("Webhook processing error:", error);
+      if (order) console.log("Order fulfilled:", order._id);
     }
+  } catch (error) {
+    console.error("Webhook processing error:", error);
   }
 
   res.sendStatus(200);
+}
+
+export async function handlePaymentSuccess(req, res) {
+  const {reference} = req.query;
+
+  // Redirect to your app
+  res.redirect(`exp://192.168.0.173:8081/--/cart?reference=${reference}`);
 }

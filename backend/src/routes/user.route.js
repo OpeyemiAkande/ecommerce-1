@@ -16,7 +16,7 @@ router.use(protectRoute);
 
 router.post("/addresses", addAddress);
 router.get("/addresses", getAddresses);
-router.put("/addresses", updateAddress);
+router.put("/addresses/:addressId", updateAddress);
 router.delete("/addresses/:addressId", deleteAddress);
 
 // wishlist routes

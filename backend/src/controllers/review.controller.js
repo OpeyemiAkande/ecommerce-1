@@ -10,6 +10,10 @@ export async function createReview(req, res) {
       return res.status(400).json({error: "Rating must be between 1 and 5"});
     }
 
+    if (!productId || !orderId) {
+      return res.status(400).json({error: "productId and orderId are required"});
+    }
+
     const user = req.user;
 
     const order = await Order.findById(orderId);

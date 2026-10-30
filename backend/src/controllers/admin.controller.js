@@ -2,6 +2,18 @@ import cloudinary from "../config/cloudinary.js";
 import {Product} from "../models/product.model.js";
 import {Order} from "../models/order.model.js";
 import {User} from "../models/user.model.js";
+import {removeTempFiles} from "../middleware/multer.middleware.js";
+
+// "https://res.cloudinary.com/<cloud>/image/upload/v123/products/abc.def.jpg"
+// -> "products/abc.def"
+function getCloudinaryPublicId(imageUrl) {
+  const filename = imageUrl.split("/products/")[1];
+  if (!filename) return null;
+
+  const dotIndex = filename.lastIndexOf(".");
+  const name = dotIndex === -1 ? filename : filename.slice(0, dotIndex);
+  return `products/${name}`;
+}
 
 export async function createProduct(req, res) {
   try {
@@ -16,7 +28,7 @@ export async function createProduct(req, res) {
     }
 
     if (req.files.length > 3) {
-      return res.status(400).json({message: "Maximum 3 images alloed"});
+      return res.status(400).json({message: "Maximum 3 images allowed"});
     }
 
     const uploadPromises = req.files.map((file) => {
@@ -33,7 +45,7 @@ export async function createProduct(req, res) {
       name,
       description,
       price: parseFloat(price),
-      stock: parse(stock),
+      stock: parseInt(stock),
       category,
       images: imageUrls
     });
@@ -41,7 +53,9 @@ export async function createProduct(req, res) {
     res.status(201).json(product);
   } catch (error) {
     console.error("Error creating product: ", error);
-    res.status(500).json({message: "Interval server error"});
+    res.status(500).json({message: "Internal server error"});
+  } finally {
+    await removeTempFiles(req.files);
   }
 }
 
@@ -72,7 +86,7 @@ export async function updateProduct(req, res) {
     if (category) product.category = category;
 
     if (req.files && req.files.length > 0) {
-      if (req.files.length > 0) {
+      if (req.files.length > 3) {
         return res.status(400).json({message: "Maximum 3 images allowed"});
       }
 
@@ -91,6 +105,8 @@ export async function updateProduct(req, res) {
   } catch (error) {
     console.error("Error updating products:", error);
     res.status(500).json({message: "Internal server error"});
+  } finally {
+    await removeTempFiles(req.files);
   }
 }
 
@@ -164,7 +180,7 @@ export async function getDashboardStats(_, res) {
       }
     ]);
 
-    const totalRevenue = revenueResult[0]?.toatl || 0;
+    const totalRevenue = revenueResult[0]?.total || 0;
 
     const totalCustomers = await User.countDocuments();
     const totalProducts = await Product.countDocuments();
@@ -192,8 +208,7 @@ export const deleteProduct = async (req, res) => {
 
     if (product.images && product.images.length > 0) {
       const deletePromises = product.images.map((imageUrl) => {
-        const publicId =
-          "products/" + imageUrl.split("/products/")[1]?.split(".")[0];
+        const publicId = getCloudinaryPublicId(imageUrl);
         if (publicId) return cloudinary.uploader.destroy(publicId);
       });
       await Promise.all(deletePromises.filter(Boolean));

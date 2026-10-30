@@ -52,7 +52,8 @@ export async function getAddresses(req, res) {
 
     res.status(200).json({addresses: user.addresses});
   } catch (error) {
-    console.error("Error in addresses");
+    console.error("Error in getAddresses controller: ", error);
+    res.status(500).json({error: "Internal server error"});
   }
 }
 
@@ -74,7 +75,7 @@ export async function updateAddress(req, res) {
     const address = user.addresses.id(addressId);
 
     if (!address) {
-      return req.status(404).json({error: "Address not found"});
+      return res.status(404).json({error: "Address not found"});
     }
 
     if (isDefault) {
@@ -133,6 +134,7 @@ export async function addToWishlist(req, res) {
 
     user.wishlist.push(productId);
     await user.save();
+    res.status(200).json({message: "Successfully added to wishlist"});
   } catch (error) {
     console.error("Error in addToWishlist controller: ", error);
     res.status(500).json({error: "Internal server error"});
@@ -151,7 +153,7 @@ export async function removeFromWishlist(req, res) {
     user.wishlist.pull(productId);
     await user.save();
 
-    res.status(200).json;
+    res.status(200).json({wishlist: user.wishlist});
   } catch (error) {
     console.error("Error in removeFromWishlist controller: ", error);
     res.status(500).json({error: "Internal server error"});

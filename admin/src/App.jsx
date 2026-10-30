@@ -7,9 +7,13 @@ import DashboardPage from "./pages/DashboardPage";
 import ProductsPage from "./pages/ProductsPage";
 import OrdersPage from "./pages/OrdersPage";
 import CustomersPage from "./pages/CustomersPage";
+import {setAuthTokenGetter} from "./lib/axios";
 
 function App() {
-  const {isSignedIn, isLoaded} = useAuth();
+  const {isSignedIn, isLoaded, getToken} = useAuth();
+
+  // Set during render (not in an effect) so child queries see it on first fetch
+  setAuthTokenGetter(getToken);
 
   if (!isLoaded) return <PageLoader />;
 

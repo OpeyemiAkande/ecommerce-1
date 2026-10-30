@@ -15,21 +15,19 @@ import orderRoutes from "./routes/order.route.js";
 import cartRoutes from "./routes/cart.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import paymentRoutes from "./routes/payment.route.js";
+import {handlePaystackWebhook} from "./controllers/payment.controller.js";
+import productsRoutes from "./routes/product.route.js";
 
 const app = express();
 
 const __dirname = path.resolve();
 
-app.use(
-  "/api/payment",
-  (req, res, next) => {
-    if (req.originalUrl === "/api/payment/webhook") {
-      express.raw({type: "application/json"})(req, res, next);
-    } else {
-      express.json()(req, res, next);
-    }
-  },
-  paymentRoutes
+// Must be registered before express.json() so the signature can be checked
+// against the raw request body.
+app.post(
+  "/api/payments/webhook",
+  express.raw({type: "application/json"}),
+  handlePaystackWebhook
 );
 
 app.use(express.json());
@@ -43,6 +41,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/review", reviewRoutes);
+app.use("/api/products", productsRoutes);
 app.use("/api/payments", paymentRoutes);
 
 app.get("/api/health", (req, res) => {

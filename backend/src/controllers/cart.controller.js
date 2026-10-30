@@ -1,5 +1,6 @@
 import {Cart} from "../models/cart.model.js";
 import {Product} from "../models/product.model.js";
+import {isValidQuantity} from "../lib/pricing.js";
 
 export async function getCart(req, res) {
   try {
@@ -28,6 +29,10 @@ export async function addToCart(req, res) {
   try {
     const {productId, quantity = 1} = req.body;
 
+    if (!isValidQuantity(quantity)) {
+      return res.status(400).json({error: "Quantity must be at least 1"});
+    }
+
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({error: "Product not found"});
@@ -53,7 +58,7 @@ export async function addToCart(req, res) {
       (item) => item.product.toString() === productId
     );
     if (existingItem) {
-      const newQuantity = existingItem.quantity + 1;
+      const newQuantity = existingItem.quantity + quantity;
       if (product.stock < newQuantity) {
         return res.status(400).json({error: "Insufficient stock"});
       }
@@ -76,7 +81,7 @@ export async function updateCartItem(req, res) {
     const {productId} = req.params;
     const {quantity} = req.body;
 
-    if (quantity < 1) {
+    if (!isValidQuantity(quantity)) {
       return res.status(400).json({error: "Quantity must be at least 1"});
     }
 
