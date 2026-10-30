@@ -73,13 +73,23 @@ function ProductsPage() {
     setEditingProduct(product);
     setFormData({
       name: product.name,
-      category: product.catetory,
+      category: product.category,
       price: product.price.toString(),
       stock: product.stock.toString(),
       description: product.description
     });
     setImagePreviews(product.images);
     setShowModal(true);
+  };
+
+  const handleDelete = (product) => {
+    if (
+      window.confirm(
+        `Delete "${product.name}"? This also removes its images and cannot be undone.`
+      )
+    ) {
+      deleteProductMutation.mutate(product._id);
+    }
   };
 
   const handleImageChange = (e) => {
@@ -146,7 +156,7 @@ function ProductsPage() {
           const status = getStockStatusBadge(product.stock);
 
           return (
-            <div className="card bg-base-100 shadow-xl">
+            <div key={product._id} className="card bg-base-100 shadow-xl">
               <div className="card-body">
                 <div className="flex items-center gap-4">
                   <div className="avatar">
@@ -188,7 +198,11 @@ function ProductsPage() {
                     >
                       <PencilIcon className="w-5 h-5" />
                     </button>
-                    <button className="btn btn-square btn-ghost text-error">
+                    <button
+                      className="btn btn-square btn-ghost text-error"
+                      onClick={() => handleDelete(product)}
+                      disabled={deleteProductMutation.isPending}
+                    >
                       {deleteProductMutation.isPending ? (
                         <span className="loading loading-spinner"></span>
                       ) : (
