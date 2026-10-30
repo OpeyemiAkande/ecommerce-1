@@ -34,12 +34,20 @@ export const protectRoute = [
   }
 ];
 
+const normalizeEmail = (email) =>
+  typeof email === "string" ? email.trim().toLowerCase() : "";
+
 export const adminOnly = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({message: "Unauthorized - user not found"});
   }
 
-  if (req.user.email !== ENV.ADMIN_EMAIL) {
+  const adminEmail = normalizeEmail(ENV.ADMIN_EMAIL);
+  const userEmail = normalizeEmail(req.user.email);
+
+  // Fail closed: with no ADMIN_EMAIL configured, or a user record that has no
+  // email, nobody is an admin (undefined must never equal undefined).
+  if (!adminEmail || userEmail !== adminEmail) {
     return res.status(403).json({message: "Forbidden - admin access only"});
   }
 
