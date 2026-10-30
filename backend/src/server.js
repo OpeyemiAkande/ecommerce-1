@@ -18,6 +18,7 @@ import reviewRoutes from "./routes/review.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import {handlePaystackWebhook} from "./controllers/payment.controller.js";
 import productsRoutes from "./routes/product.route.js";
+import publicRoutes from "./routes/public.route.js";
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/review", reviewRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/public", publicRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({message: "Success"});
