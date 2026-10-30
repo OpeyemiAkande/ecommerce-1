@@ -31,15 +31,18 @@ function originOf(url: string | undefined): string | null {
 export function buildSecurityHeaders({
   clerkPublishableKey,
   apiUrl,
+  sentryDsn,
   isProd
 }: {
   clerkPublishableKey: string | undefined;
   apiUrl: string | undefined;
+  sentryDsn?: string;
   isProd: boolean;
 }): Header[] {
   const clerkHost = clerkHostFromKey(clerkPublishableKey);
   const clerk = clerkHost ? [`https://${clerkHost}`] : [];
   const api = originOf(apiUrl);
+  const sentry = originOf(sentryDsn);
   const turnstile = "https://challenges.cloudflare.com";
 
   const sources: Record<string, string[]> = {
@@ -68,6 +71,7 @@ export function buildSecurityHeaders({
       "'self'",
       ...(api ? [api] : []),
       ...clerk,
+      ...(sentry ? [sentry] : []),
       "https://clerk-telemetry.com",
       turnstile,
       ...(isProd ? [] : ["ws:", "wss:"])

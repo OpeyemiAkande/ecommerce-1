@@ -56,6 +56,17 @@ describe("buildSecurityHeaders", () => {
     expect(csp).not.toMatch(/\*(?!\.)/); // no bare wildcard sources
   });
 
+  it("allows the Sentry ingest origin only when a DSN is configured", () => {
+    const csp = (dsn?: string) =>
+      header(build({sentryDsn: dsn}), "Content-Security-Policy") ?? "";
+
+    expect(csp("https://abc123@o42.ingest.sentry.io/99")).toMatch(
+      /connect-src[^;]*https:\/\/o42\.ingest\.sentry\.io/
+    );
+    expect(csp(undefined)).not.toContain("sentry");
+    expect(csp("not a url")).not.toContain("sentry");
+  });
+
   it("only allows eval and websockets in development", () => {
     const prod = header(build({isProd: true}), "Content-Security-Policy")!;
     const dev = header(build({isProd: false}), "Content-Security-Policy")!;

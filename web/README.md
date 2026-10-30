@@ -1,6 +1,6 @@
 # Web storefront
 
-SEO-focused customer storefront: Next.js (App Router), Clerk, Paystack.
+SEO-focused customer storefront and admin dashboard: Next.js (App Router), Clerk, Paystack.
 
 ## Setup
 
@@ -10,6 +10,12 @@ SEO-focused customer storefront: Next.js (App Router), Clerk, Paystack.
    - `WEB_URL` = this app's public URL (Paystack returns the customer here)
    - `PAYSTACK_SECRET_KEY` (use a test key locally)
 3. `npm install && npm run dev` (http://localhost:3000)
+
+## Admin
+
+The admin dashboard lives at `/admin` (dashboard, products, orders, customers). It uses the same Clerk app as the storefront and calls `/api/admin/*`; the backend only allows the user whose email is `ADMIN_EMAIL`. Other signed-in users see a "You don't have access" screen. `/admin` is noindex and disallowed in `robots.txt`.
+
+Env mapping from the old Vite admin: `VITE_CLERK_PUBLISHABLE_KEY` -> `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `VITE_API_URL` -> `NEXT_PUBLIC_API_URL`, `VITE_SENTRY_DSN` -> `NEXT_PUBLIC_SENTRY_DSN`, `VITE_SENTRY_REPLAY_SESSION_SAMPLE_RATE` -> `NEXT_PUBLIC_SENTRY_REPLAY_SESSION_SAMPLE_RATE`.
 
 ## Scripts
 
@@ -40,3 +46,4 @@ Adapted from `mobile/` (see `docs/superpowers/specs/2026-10-30-web-design-system
 - `src/lib/pricing.ts` mirrors `backend/src/lib/pricing.js` (shipping and tax). The server is authoritative; keep both in sync.
 - `src/pages/500.tsx` exists only because App Router error boundaries don't cover a failed first render of an ISR route.
 - Deploy separately (e.g. Vercel) with the same env vars as `.env.example`.
+- Sentry runs in the browser only when `NEXT_PUBLIC_SENTRY_DSN` is set; its ingest host is added to the CSP from that DSN.

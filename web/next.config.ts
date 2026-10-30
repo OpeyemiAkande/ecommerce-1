@@ -22,6 +22,7 @@ const nextConfig: NextConfig = {
         headers: buildSecurityHeaders({
           clerkPublishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
           apiUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api",
+          sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
           isProd: process.env.NODE_ENV === "production"
         })
       }
