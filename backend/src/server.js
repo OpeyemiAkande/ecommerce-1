@@ -9,6 +9,9 @@ import {functions, inngest} from "./config/inngest.js";
 import {ENV} from "./config/env.js";
 import {connectDB} from "./config/db.js";
 import {parseAllowedOrigins} from "./lib/origins.js";
+import {parseTrustProxy} from "./lib/trustProxy.js";
+import {securityHeaders} from "./config/security.js";
+import {apiLimiter, publicLimiter} from "./middleware/rateLimit.middleware.js";
 
 import adminRoutes from "./routes/admin.route.js";
 import userRoutes from "./routes/user.route.js";
@@ -24,17 +27,27 @@ const app = express();
 
 const __dirname = path.resolve();
 
+app.set("trust proxy", parseTrustProxy(ENV.TRUST_PROXY));
+app.use(securityHeaders());
+
 // Must be registered before express.json() so the signature can be checked
-// against the raw request body.
+// against the raw request body. It is also registered before the rate
+// limiters, so Paystack's webhook calls are never throttled.
 app.post(
   "/api/payments/webhook",
   express.raw({type: "application/json"}),
   handlePaystackWebhook
 );
 
+// CORS comes before the limiters so a 429 still carries CORS headers and the
+// browser can read it instead of reporting an opaque network error.
+app.use(cors({origin: parseAllowedOrigins(ENV.CLIENT_URL), credentials: true}));
+
+app.use("/api/public", publicLimiter);
+app.use("/api", apiLimiter);
+
 app.use(express.json());
 app.use(clerkMiddleware()); // adds auth object under the req => req.auth
-app.use(cors({origin: parseAllowedOrigins(ENV.CLIENT_URL), credentials: true}));
 
 app.use("/api/inngest", serve({client: inngest, functions}));
 

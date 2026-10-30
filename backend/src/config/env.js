@@ -16,6 +16,7 @@ export const ENV = {
   CLIENT_URL: process.env.CLIENT_URL,
   NGROK_URL: process.env.NGROK_URL,
   WEB_URL: process.env.WEB_URL,
+  TRUST_PROXY: process.env.TRUST_PROXY,
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
   PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY
 };

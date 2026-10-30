@@ -1,9 +1,19 @@
-import {requireAuth} from "@clerk/express";
 import {User} from "../models/user.model.js";
 import {ENV} from "../config/env.js";
 
+// Clerk's requireAuth() answers an unauthenticated request with a 302 redirect
+// to a sign-in page, which API clients (axios, fetch) can't act on. An API
+// should answer 401 so clients can send the user to sign in themselves.
+export const requireSignedIn = (req, res, next) => {
+  if (!req.auth().userId) {
+    return res.status(401).json({message: "Unauthorized - sign in required"});
+  }
+
+  next();
+};
+
 export const protectRoute = [
-  requireAuth(),
+  requireSignedIn,
   async (req, res, next) => {
     try {
       const clerkId = req.auth().userId;
