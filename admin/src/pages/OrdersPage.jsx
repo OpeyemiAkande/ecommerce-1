@@ -61,7 +61,8 @@ function OrdersPage() {
                 <tbody>
                   {orders.map((order) => {
                     const totalQuantity = order.orderItems.reduce(
-                      (sum, item) => sum + item.quantity
+                      (sum, item) => sum + item.quantity,
+                      0
                     );
 
                     return (
@@ -106,7 +107,11 @@ function OrdersPage() {
                               handleStatusChange(order._id, e.target.value)
                             }
                             className="select select-sm"
-                            disabled={updateStatusMutation.isPending}
+                            disabled={
+                              updateStatusMutation.isPending &&
+                              updateStatusMutation.variables?.orderId ===
+                                order._id
+                            }
                           >
                             <option value="pending">Pending</option>
                             <option value="shipped">Shipped</option>

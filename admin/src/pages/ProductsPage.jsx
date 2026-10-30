@@ -2,10 +2,10 @@ import {useState} from "react";
 import {
   PlusIcon,
   PencilIcon,
-  TrashIcon,
   XIcon,
   ImageIcon,
-  Trash2Icon
+  Trash2Icon,
+  TriangleAlertIcon
 } from "lucide-react";
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {productApi} from "../lib/api";
@@ -23,6 +23,7 @@ function ProductsPage() {
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -50,10 +51,21 @@ function ProductsPage() {
   const deleteProductMutation = useMutation({
     mutationFn: productApi.delete,
     onSuccess: () => {
-      closeModal();
+      setProductToDelete(null);
       queryClient.invalidateQueries({queryKey: ["products"]});
     }
   });
+
+  // The mutation is shared, so match on the id it is running for
+  const isDeleting = (productId) =>
+    deleteProductMutation.isPending &&
+    deleteProductMutation.variables === productId;
+
+  const closeDeleteModal = () => {
+    if (deleteProductMutation.isPending) return;
+    deleteProductMutation.reset();
+    setProductToDelete(null);
+  };
 
   const closeModal = () => {
     setShowModal(false);
@@ -80,16 +92,6 @@ function ProductsPage() {
     });
     setImagePreviews(product.images);
     setShowModal(true);
-  };
-
-  const handleDelete = (product) => {
-    if (
-      window.confirm(
-        `Delete "${product.name}"? This also removes its images and cannot be undone.`
-      )
-    ) {
-      deleteProductMutation.mutate(product._id);
-    }
   };
 
   const handleImageChange = (e) => {
@@ -200,10 +202,10 @@ function ProductsPage() {
                     </button>
                     <button
                       className="btn btn-square btn-ghost text-error"
-                      onClick={() => handleDelete(product)}
-                      disabled={deleteProductMutation.isPending}
+                      onClick={() => setProductToDelete(product)}
+                      disabled={isDeleting(product._id)}
                     >
-                      {deleteProductMutation.isPending ? (
+                      {isDeleting(product._id) ? (
                         <span className="loading loading-spinner"></span>
                       ) : (
                         <Trash2Icon className="w-5 h-5" />
@@ -391,6 +393,89 @@ function ProductsPage() {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <input
+        type="checkbox"
+        className="modal-toggle"
+        checked={Boolean(productToDelete)}
+        readOnly
+      />
+
+      <div className="modal">
+        <div className="modal-box max-w-md">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-2xl">Delete Product</h3>
+
+            <button
+              onClick={closeDeleteModal}
+              className="btn btn-sm btn-circle btn-ghost"
+              disabled={deleteProductMutation.isPending}
+            >
+              <XIcon className="w-5 h-5" />
+            </button>
+          </div>
+
+          {productToDelete && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 bg-base-200 rounded-xl p-4">
+                <div className="avatar">
+                  <div className="w-16 rounded-lg">
+                    <img
+                      src={productToDelete.images[0]}
+                      alt={productToDelete.name}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold">{productToDelete.name}</h4>
+                  <p className="text-sm text-base-content/70">
+                    {productToDelete.category}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 text-error">
+                <TriangleAlertIcon className="w-5 h-5 shrink-0 mt-0.5" />
+                <p className="text-sm">
+                  This permanently removes the product and its images. This
+                  action cannot be undone.
+                </p>
+              </div>
+
+              {deleteProductMutation.isError && (
+                <p className="text-sm text-error">
+                  Failed to delete the product. Please try again.
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="modal-action">
+            <button
+              type="button"
+              onClick={closeDeleteModal}
+              className="btn"
+              disabled={deleteProductMutation.isPending}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={() => deleteProductMutation.mutate(productToDelete._id)}
+              className="btn btn-error"
+              disabled={deleteProductMutation.isPending}
+            >
+              {deleteProductMutation.isPending ? (
+                <span className="loading loading-spinner"></span>
+              ) : (
+                "Delete"
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
