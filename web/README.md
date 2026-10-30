@@ -17,6 +17,13 @@ SEO-focused customer storefront: Next.js (App Router), Clerk, Paystack.
 - `npm run test:e2e` Playwright smoke test (builds the app; uses a fake API)
 - `npm run typecheck`, `npm run lint`
 
+## Security
+
+- `next.config.ts` sends security headers built by `src/lib/securityHeaders.ts`: a Content-Security-Policy, `X-Frame-Options: DENY`, `nosniff`, a referrer policy, a permissions policy, and HSTS in production.
+- The CSP allows Clerk by reading its host from `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, and the API from `NEXT_PUBLIC_API_URL`. If you add another third-party script, image host or API, add it to that file or the browser will block it (check the console for "Content Security Policy" errors).
+- Scripts allow `'unsafe-inline'` because Next.js emits inline bootstrap code; a per-request nonce would tighten this.
+- Backend (`backend/.env`): set `TRUST_PROXY=1` when deployed behind one reverse proxy (Render, Heroku, nginx), otherwise rate limiting sees every user as the proxy's IP.
+
 ## Design system
 
 Adapted from `mobile/` (see `docs/superpowers/specs/2026-10-30-web-design-system-design.md`). Dark mode is the mobile palette; light mode follows the OS setting.
