@@ -1,6 +1,11 @@
 import {describe, expect, it} from "vitest";
-import {cartItemCount, cartSubtotal, computeTotals} from "./pricing";
-import type {CartItem} from "./types";
+import {
+  cartItemCount,
+  cartSubtotal,
+  computeTotals,
+  liveItems
+} from "./pricing";
+import type {ApiCartItem, CartItem} from "./types";
 
 const item = (price: number, quantity: number): CartItem =>
   ({_id: "i", quantity, product: {price}}) as unknown as CartItem;
@@ -34,5 +39,18 @@ describe("cart helpers", () => {
 
   it("counts units", () => {
     expect(cartItemCount(items)).toBe(5);
+  });
+});
+
+describe("liveItems", () => {
+  it("drops items whose product was deleted (populated as null)", () => {
+    const live = item(10, 1) as ApiCartItem;
+    const dead = {_id: "d", quantity: 2, product: null} as ApiCartItem;
+
+    const result = liveItems([live, dead]);
+
+    expect(result).toHaveLength(1);
+    expect(cartSubtotal(result)).toBe(10);
+    expect(cartItemCount(result)).toBe(1);
   });
 });

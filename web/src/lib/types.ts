@@ -35,6 +35,16 @@ export interface Cart {
   items: CartItem[];
 }
 
+// As returned by GET /cart: `product` is null when the product was deleted
+// after being added to the cart. Use `liveItems` to get a usable Cart.
+export interface ApiCartItem extends Omit<CartItem, "product"> {
+  product: Product | null;
+}
+
+export interface ApiCart extends Omit<Cart, "items"> {
+  items: ApiCartItem[];
+}
+
 export interface Address {
   _id: string;
   label: string;

@@ -5,8 +5,8 @@ import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {toast} from "sonner";
 import {ApiError} from "@/lib/api/client";
 import {useApi} from "@/lib/api/useApi";
-import {cartItemCount, cartSubtotal} from "@/lib/pricing";
-import type {Cart} from "@/lib/types";
+import {cartItemCount, cartSubtotal, liveItems} from "@/lib/pricing";
+import type {ApiCart, Cart} from "@/lib/types";
 
 export const CART_KEY = ["cart"];
 
@@ -24,7 +24,11 @@ export function useCart() {
   const query = useQuery({
     queryKey: CART_KEY,
     enabled: Boolean(isSignedIn),
-    queryFn: async () => (await api.get<{cart: Cart}>("/cart")).cart
+    queryFn: async (): Promise<Cart> => {
+      const {cart} = await api.get<{cart: ApiCart}>("/cart");
+
+      return {...cart, items: liveItems(cart.items)};
+    }
   });
 
   const add = useMutation({

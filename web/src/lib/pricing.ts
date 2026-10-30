@@ -1,4 +1,4 @@
-import type {CartItem} from "./types";
+import type {ApiCartItem, CartItem} from "./types";
 
 // Mirrors backend/src/lib/pricing.js. The server is authoritative; this is
 // for display only, so keep both in sync.
@@ -11,6 +11,10 @@ export function computeTotals(subtotal: number) {
 
   return {subtotal, shipping, tax, total: subtotal + shipping + tax};
 }
+
+// Drops items whose product no longer exists (populated as null).
+export const liveItems = (items: ApiCartItem[]): CartItem[] =>
+  items.filter((item): item is CartItem => item.product !== null);
 
 export const cartSubtotal = (items: CartItem[]) =>
   items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
