@@ -75,4 +75,41 @@ describe("createApiClient", () => {
     await expect(api.get("/cart")).rejects.toMatchObject({status: 401});
     expect(onUnauthorized).toHaveBeenCalledOnce();
   });
+
+  it("sends FormData as-is without a JSON content type", async () => {
+    const fetchImpl = respond({});
+    const api = createApiClient({
+      baseUrl: "http://api",
+      getToken: async () => "tok",
+      fetchImpl
+    });
+    const form = new FormData();
+    form.append("name", "Shoe");
+
+    await api.post("/admin/products", form);
+
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(init.body).toBe(form);
+    expect(headers["Content-Type"]).toBeUndefined();
+    expect(headers.Authorization).toBe("Bearer tok");
+  });
+
+  it("supports PATCH with a JSON body", async () => {
+    const fetchImpl = respond({});
+    const api = createApiClient({
+      baseUrl: "http://api",
+      getToken: async () => null,
+      fetchImpl
+    });
+
+    await api.patch("/admin/orders/o1/status", {status: "shipped"});
+
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.method).toBe("PATCH");
+    expect(init.body).toBe(JSON.stringify({status: "shipped"}));
+    expect((init.headers as Record<string, string>)["Content-Type"]).toBe(
+      "application/json"
+    );
+  });
 });

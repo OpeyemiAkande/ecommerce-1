@@ -35,14 +35,21 @@ export function createApiClient({
     body?: unknown
   ): Promise<T> {
     const token = await getToken();
+    const isForm = typeof FormData !== "undefined" && body instanceof FormData;
     const headers: Record<string, string> = {};
-    if (body !== undefined) headers["Content-Type"] = "application/json";
+    // fetch sets the multipart boundary itself, so FormData gets no content type.
+    if (body !== undefined && !isForm) headers["Content-Type"] = "application/json";
     if (token) headers.Authorization = `Bearer ${token}`;
 
     const res = await fetchImpl(`${baseUrl}${path}`, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined
+      body:
+        body === undefined
+          ? undefined
+          : isForm
+            ? (body as FormData)
+            : JSON.stringify(body)
     });
 
     const data = parseJson(await res.text());
@@ -64,6 +71,7 @@ export function createApiClient({
     get: <T>(path: string) => request<T>(path, "GET"),
     post: <T>(path: string, body?: unknown) => request<T>(path, "POST", body ?? {}),
     put: <T>(path: string, body?: unknown) => request<T>(path, "PUT", body ?? {}),
+    patch: <T>(path: string, body?: unknown) => request<T>(path, "PATCH", body ?? {}),
     delete: <T>(path: string) => request<T>(path, "DELETE")
   };
 }
