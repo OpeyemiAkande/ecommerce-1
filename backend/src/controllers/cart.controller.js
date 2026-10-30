@@ -18,6 +18,12 @@ export async function getCart(req, res) {
       });
     }
 
+    // Heal carts that still reference a deleted product (populated as null).
+    if (cart.items.some((item) => !item.product)) {
+      cart.items = cart.items.filter((item) => item.product);
+      await cart.save();
+    }
+
     res.status(200).json({cart});
   } catch (error) {
     console.error("Error in getCart controller:", error);

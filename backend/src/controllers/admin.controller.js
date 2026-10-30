@@ -1,6 +1,7 @@
 import cloudinary from "../config/cloudinary.js";
 import {Product} from "../models/product.model.js";
 import {Order} from "../models/order.model.js";
+import {Cart} from "../models/cart.model.js";
 import {User} from "../models/user.model.js";
 import {removeTempFiles} from "../middleware/multer.middleware.js";
 
@@ -215,6 +216,10 @@ export const deleteProduct = async (req, res) => {
     }
 
     await Product.findByIdAndDelete(id);
+    // Don't leave dead references behind: populate() would return null for
+    // them and break every cart that still holds the product.
+    await Cart.updateMany({}, {$pull: {items: {product: id}}});
+
     res.status(200).json({message: "Product deleted successfully"});
   } catch (error) {
     console.error("Error deleting product:", error);
