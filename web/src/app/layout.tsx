@@ -11,14 +11,33 @@ export const metadata: Metadata = {
   description: `Shop the latest products at ${STORE_NAME}.`
 };
 
+// Clerk reads our CSS variables, so its UI follows the light/dark palette.
+const clerkAppearance = {
+  variables: {
+    colorPrimary: "var(--primary)",
+    colorPrimaryForeground: "var(--on-primary)",
+    colorBackground: "var(--surface)",
+    colorForeground: "var(--text-primary)",
+    colorMutedForeground: "var(--text-secondary)",
+    colorMuted: "var(--background-lighter)",
+    colorInput: "var(--background-lighter)",
+    colorInputForeground: "var(--text-primary)",
+    colorNeutral: "var(--text-primary)",
+    colorDanger: "var(--accent-red)",
+    borderRadius: "1rem"
+  }
+};
+
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <ClerkProvider>
+    <ClerkProvider appearance={clerkAppearance}>
       <html lang="en">
-        <body className="min-h-screen bg-neutral-50 text-neutral-900 antialiased">
+        <body className="min-h-screen">
           <Providers>
             <Header />
-            <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+            <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+              {children}
+            </main>
           </Providers>
         </body>
       </html>

@@ -3,10 +3,10 @@
 import {useState} from "react";
 import type {AddressInput} from "@/hooks/useAddresses";
 
-const FIELDS: {name: keyof AddressInput; label: string}[] = [
+const FIELDS: {name: keyof AddressInput; label: string; wide?: boolean}[] = [
   {name: "label", label: "Label (e.g. Home)"},
   {name: "fullName", label: "Full name"},
-  {name: "streetAddress", label: "Street address"},
+  {name: "streetAddress", label: "Street address", wide: true},
   {name: "city", label: "City"},
   {name: "state", label: "State"},
   {name: "zipCode", label: "Postal code"},
@@ -31,10 +31,13 @@ export function AddressForm({
         event.preventDefault();
         onSubmit({...(values as Omit<AddressInput, "isDefault">), isDefault});
       }}
-      className="grid gap-3 rounded-lg border border-neutral-200 bg-white p-4 sm:grid-cols-2"
+      className="card grid gap-4 p-5 sm:grid-cols-2"
     >
-      {FIELDS.map(({name, label}) => (
-        <label key={name} className="text-sm">
+      {FIELDS.map(({name, label, wide}) => (
+        <label
+          key={name}
+          className={`text-sm font-medium text-text-secondary ${wide ? "sm:col-span-2" : ""}`}
+        >
           {label}
           <input
             required
@@ -42,33 +45,27 @@ export function AddressForm({
             onChange={(event) =>
               setValues((prev) => ({...prev, [name]: event.target.value}))
             }
-            className="mt-1 w-full rounded border border-neutral-300 px-3 py-2"
+            className="input mt-1.5 !bg-background-lighter text-base"
           />
         </label>
       ))}
 
-      <label className="flex items-center gap-2 text-sm sm:col-span-2">
+      <label className="flex items-center gap-3 text-sm sm:col-span-2">
         <input
           type="checkbox"
           checked={isDefault}
           onChange={(event) => setIsDefault(event.target.checked)}
+          className="size-5 accent-primary"
         />
         Make this my default address
       </label>
 
-      <div className="flex gap-2 sm:col-span-2">
-        <button
-          disabled={submitting}
-          className="rounded bg-neutral-900 px-4 py-2 text-white disabled:opacity-50"
-        >
+      <div className="flex gap-3 sm:col-span-2">
+        <button disabled={submitting} className="btn-primary">
           {submitting ? "Saving..." : "Save address"}
         </button>
         {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded border px-4 py-2"
-          >
+          <button type="button" onClick={onCancel} className="btn-secondary">
             Cancel
           </button>
         )}

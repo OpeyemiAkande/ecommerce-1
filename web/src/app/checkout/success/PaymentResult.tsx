@@ -1,50 +1,48 @@
 "use client";
 
 import Link from "next/link";
+import {IoCheckmarkCircle, IoCloseCircle} from "react-icons/io5";
+import {Spinner, StateMessage} from "@/components/StateMessage";
 import {usePaymentVerification} from "@/hooks/usePaymentVerification";
 
 export function PaymentResult({reference}: {reference: string | null}) {
   const {status, message, retry} = usePaymentVerification(reference);
 
   if (status === "verifying") {
-    return (
-      <div className="py-16 text-center">
-        <h1 className="text-2xl font-semibold">Confirming your payment...</h1>
-        <p className="mt-2 text-neutral-600">Please don&apos;t close this page.</p>
-      </div>
-    );
+    return <Spinner label="Confirming your payment... Please don't close this page." />;
   }
 
   if (status === "success") {
     return (
-      <div className="py-16 text-center">
-        <h1 className="text-2xl font-semibold">Thank you for your order!</h1>
-        <p className="mt-2 text-neutral-600">Your payment was successful.</p>
-        <Link
-          href="/account/orders"
-          className="mt-6 inline-block rounded bg-neutral-900 px-4 py-2 text-white"
-        >
+      <StateMessage
+        icon={IoCheckmarkCircle}
+        tone="success"
+        title="Thank you for your order!"
+        description="Your payment was successful."
+      >
+        <Link href="/account/orders" className="btn-primary">
           View my orders
         </Link>
-      </div>
+        <Link href="/products" className="btn-secondary">
+          Keep shopping
+        </Link>
+      </StateMessage>
     );
   }
 
   return (
-    <div className="py-16 text-center">
-      <h1 className="text-2xl font-semibold">We couldn&apos;t confirm your payment</h1>
-      <p className="mt-2 text-neutral-600">{message}</p>
-      <p className="mt-1 text-sm text-neutral-500">
-        If you were charged, your order will still be processed automatically.
-      </p>
-      <div className="mt-6 flex justify-center gap-3">
-        <button onClick={retry} className="rounded bg-neutral-900 px-4 py-2 text-white">
-          Try again
-        </button>
-        <Link href="/cart" className="rounded border px-4 py-2">
-          Back to cart
-        </Link>
-      </div>
-    </div>
+    <StateMessage
+      icon={IoCloseCircle}
+      tone="error"
+      title="We couldn't confirm your payment"
+      description={`${message ?? ""} If you were charged, your order will still be processed automatically.`.trim()}
+    >
+      <button onClick={retry} className="btn-primary">
+        Try again
+      </button>
+      <Link href="/cart" className="btn-secondary">
+        Back to cart
+      </Link>
+    </StateMessage>
   );
 }

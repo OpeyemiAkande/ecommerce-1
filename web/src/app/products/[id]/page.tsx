@@ -1,11 +1,12 @@
 import type {Metadata} from "next";
-import Image from "next/image";
+import Link from "next/link";
 import {notFound} from "next/navigation";
-import {AddToCartButton} from "@/components/AddToCartButton";
+import {IoChevronBack, IoStar} from "react-icons/io5";
+import {ProductGallery} from "@/components/ProductGallery";
+import {PurchasePanel} from "@/components/PurchasePanel";
 import {fetchProduct} from "@/lib/api/server";
 import {SITE_URL} from "@/lib/config";
-import {formatPrice} from "@/lib/format";
-import {productJsonLd} from "@/lib/seo";
+import {productJsonLd, serializeJsonLd} from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -44,73 +45,74 @@ export default async function ProductPage({params}: Props) {
 
   if (!product) notFound();
 
-  // "<" is escaped so product text can never close the script tag.
-  const jsonLd = JSON.stringify(productJsonLd(product, SITE_URL)).replace(
-    /</g,
-    "\u003c"
-  );
+  const jsonLd = serializeJsonLd(productJsonLd(product, SITE_URL));
 
   return (
-    <article className="grid gap-8 md:grid-cols-2">
+    <article className="space-y-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{__html: jsonLd}}
       />
 
-      <div className="space-y-3">
-        <div className="relative aspect-square overflow-hidden rounded-lg bg-neutral-100">
-          {product.images[0] && (
-            <Image
-              src={product.images[0]}
-              alt={product.name}
-              fill
-              priority
-              sizes="(min-width: 768px) 50vw, 100vw"
-              className="object-cover"
-            />
-          )}
-        </div>
-        {product.images.length > 1 && (
-          <div className="grid grid-cols-4 gap-2">
-            {product.images.slice(1, 5).map((src) => (
-              <div
-                key={src}
-                className="relative aspect-square overflow-hidden rounded bg-neutral-100"
-              >
-                <Image
-                  src={src}
-                  alt={product.name}
-                  fill
-                  sizes="12vw"
-                  className="object-cover"
-                />
+      <Link
+        href="/products"
+        className="inline-flex items-center gap-1 text-sm font-semibold text-text-secondary hover:text-text-primary"
+      >
+        <IoChevronBack size={16} />
+        Back to shop
+      </Link>
+
+      <div className="grid gap-8 md:grid-cols-2">
+        <ProductGallery images={product.images} name={product.name} />
+
+        <div className="space-y-5">
+          <span className="inline-block rounded-full bg-primary/15 px-3 py-1 text-xs font-bold text-primary-text">
+            {product.category}
+          </span>
+
+          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+            {product.name}
+          </h1>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {product.totalReviews > 0 && (
+              <div className="flex items-center rounded-full border border-line bg-surface px-3 py-2">
+                <IoStar size={16} className="text-accent-yellow" />
+                <span className="ml-1 mr-2 font-bold">
+                  {product.averageRating.toFixed(1)}
+                </span>
+                <span className="text-sm text-text-secondary">
+                  ({product.totalReviews}{" "}
+                  {product.totalReviews === 1 ? "review" : "reviews"})
+                </span>
               </div>
-            ))}
+            )}
+
+            <div className="flex items-center">
+              <span
+                className={`mr-2 size-2 rounded-full ${product.inStock ? "bg-primary" : "bg-accent-red"}`}
+              />
+              <span
+                className={`text-sm font-semibold ${product.inStock ? "text-primary-text" : "text-accent-red"}`}
+              >
+                {product.inStock ? "In stock" : "Out of stock"}
+              </span>
+            </div>
           </div>
-        )}
-      </div>
 
-      <div className="space-y-4">
-        <p className="text-sm text-neutral-500">{product.category}</p>
-        <h1 className="text-3xl font-semibold">{product.name}</h1>
-        <p className="text-2xl">{formatPrice(product.price)}</p>
+          <PurchasePanel
+            productId={product._id}
+            price={product.price}
+            inStock={product.inStock}
+          />
 
-        {product.totalReviews > 0 && (
-          <p className="text-sm text-neutral-600">
-            ★ {product.averageRating.toFixed(1)} ({product.totalReviews}{" "}
-            {product.totalReviews === 1 ? "review" : "reviews"})
-          </p>
-        )}
-
-        <p className="whitespace-pre-line text-neutral-700">
-          {product.description}
-        </p>
-
-        <p className={product.inStock ? "text-green-700" : "text-red-700"}>
-          {product.inStock ? "In stock" : "Out of stock"}
-        </p>
-
-        <AddToCartButton productId={product._id} disabled={!product.inStock} />
+          <div>
+            <h2 className="mb-3 text-lg font-bold">Description</h2>
+            <p className="whitespace-pre-line leading-6 text-text-secondary">
+              {product.description}
+            </p>
+          </div>
+        </div>
       </div>
     </article>
   );

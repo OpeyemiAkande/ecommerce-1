@@ -2,7 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import {
+  IoAdd,
+  IoArrowForward,
+  IoCartOutline,
+  IoRemove,
+  IoTrashOutline
+} from "react-icons/io5";
 import {OrderSummary} from "@/components/OrderSummary";
+import {Spinner, StateMessage} from "@/components/StateMessage";
 import {useCart} from "@/hooks/useCart";
 import {formatPrice} from "@/lib/format";
 
@@ -17,59 +25,68 @@ export default function CartPage() {
     isRemoving
   } = useCart();
 
-  if (isLoading) return <p>Loading your cart...</p>;
+  if (isLoading) return <Spinner label="Loading cart..." />;
 
   const items = cart?.items ?? [];
 
   if (items.length === 0) {
     return (
-      <div className="py-16 text-center">
-        <h1 className="text-2xl font-semibold">Your cart is empty</h1>
-        <Link
-          href="/products"
-          className="mt-6 inline-block rounded bg-neutral-900 px-4 py-2 text-white"
-        >
+      <StateMessage
+        icon={IoCartOutline}
+        title="Your cart is empty"
+        description="Add some products to get started."
+      >
+        <Link href="/products" className="btn-primary">
           Continue shopping
         </Link>
-      </div>
+      </StateMessage>
     );
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-3">
-      <section className="space-y-4 lg:col-span-2">
-        <h1 className="text-2xl font-semibold">Your cart</h1>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold tracking-tight">Cart</h1>
 
-        {items.map(({_id, product, quantity}) => (
-          <div
-            key={_id}
-            className="flex gap-4 rounded-lg border border-neutral-200 bg-white p-4"
-          >
-            <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded bg-neutral-100">
-              {product.images[0] && (
-                <Image
-                  src={product.images[0]}
-                  alt={product.name}
-                  fill
-                  sizes="96px"
-                  className="object-cover"
-                />
-              )}
-            </div>
+      <div className="grid gap-8 lg:grid-cols-3">
+        <section className="space-y-3 lg:col-span-2">
+          {items.map(({_id, product, quantity}) => (
+            <div key={_id} className="card flex gap-4 p-4">
+              <Link
+                href={`/products/${product._id}`}
+                className="relative size-24 shrink-0 overflow-hidden rounded-2xl bg-background-lighter sm:size-28"
+              >
+                {product.images[0] && (
+                  <Image
+                    src={product.images[0]}
+                    alt={product.name}
+                    fill
+                    sizes="112px"
+                    className="object-cover"
+                  />
+                )}
+              </Link>
 
-            <div className="flex flex-1 flex-col justify-between">
-              <div className="flex justify-between gap-2">
-                <Link
-                  href={`/products/${product._id}`}
-                  className="font-medium hover:underline"
-                >
-                  {product.name}
-                </Link>
-                <span>{formatPrice(product.price * quantity)}</span>
-              </div>
+              <div className="flex flex-1 flex-col justify-between">
+                <div>
+                  <Link
+                    href={`/products/${product._id}`}
+                    className="text-lg font-bold leading-tight hover:underline"
+                  >
+                    {product.name}
+                  </Link>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-xl font-bold text-primary-text">
+                      {formatPrice(product.price * quantity)}
+                    </span>
+                    {quantity > 1 && (
+                      <span className="text-sm text-text-secondary">
+                        {formatPrice(product.price)} each
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="mt-3 flex items-center">
                   <button
                     aria-label="Decrease quantity"
                     disabled={quantity <= 1 || isUpdating}
@@ -79,11 +96,13 @@ export default function CartPage() {
                         quantity: quantity - 1
                       })
                     }
-                    className="h-8 w-8 rounded border disabled:opacity-40"
+                    className="icon-btn-primary"
                   >
-                    −
+                    <IoRemove size={18} />
                   </button>
-                  <span className="w-6 text-center">{quantity}</span>
+                  <span className="mx-4 min-w-6 text-center text-lg font-bold">
+                    {quantity}
+                  </span>
                   <button
                     aria-label="Increase quantity"
                     disabled={quantity >= product.stock || isUpdating}
@@ -93,34 +112,33 @@ export default function CartPage() {
                         quantity: quantity + 1
                       })
                     }
-                    className="h-8 w-8 rounded border disabled:opacity-40"
+                    className="icon-btn-primary"
                   >
-                    +
+                    <IoAdd size={18} />
+                  </button>
+
+                  <button
+                    aria-label={`Remove ${product.name}`}
+                    disabled={isRemoving}
+                    onClick={() => removeFromCart(product._id)}
+                    className="icon-btn ml-auto !bg-accent-red/10 !text-accent-red"
+                  >
+                    <IoTrashOutline size={18} />
                   </button>
                 </div>
-
-                <button
-                  disabled={isRemoving}
-                  onClick={() => removeFromCart(product._id)}
-                  className="text-sm text-red-700 hover:underline disabled:opacity-50"
-                >
-                  Remove
-                </button>
               </div>
             </div>
-          </div>
-        ))}
-      </section>
+          ))}
+        </section>
 
-      <aside className="space-y-4">
-        <OrderSummary subtotal={subtotal} />
-        <Link
-          href="/checkout"
-          className="block rounded bg-neutral-900 px-4 py-3 text-center text-white"
-        >
-          Proceed to checkout
-        </Link>
-      </aside>
+        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+          <OrderSummary subtotal={subtotal} />
+          <Link href="/checkout" className="btn-primary w-full !py-4 text-lg">
+            Proceed to checkout
+            <IoArrowForward size={22} />
+          </Link>
+        </aside>
+      </div>
     </div>
   );
 }

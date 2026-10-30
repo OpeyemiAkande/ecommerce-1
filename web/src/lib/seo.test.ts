@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {buildSitemap, productJsonLd} from "./seo";
+import {buildSitemap, productJsonLd, serializeJsonLd} from "./seo";
 import type {PublicProduct} from "./types";
 
 interface JsonLd {
@@ -62,5 +62,17 @@ describe("buildSitemap", () => {
       "https://shop.example.com/products/p1"
     ]);
     expect(entries[2].lastModified).toBe("2026-02-01T00:00:00.000Z");
+  });
+});
+
+describe("serializeJsonLd", () => {
+  it("never emits a raw < so product text cannot close the script tag", () => {
+    const hostile = {description: "</script><script>alert(1)</script>"};
+
+    const out = serializeJsonLd(hostile);
+
+    expect(out).not.toContain("<");
+    expect(out).toContain(String.fromCharCode(92) + "u003c");
+    expect(JSON.parse(out)).toEqual(hostile);
   });
 });

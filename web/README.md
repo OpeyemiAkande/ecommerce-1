@@ -17,6 +17,15 @@ SEO-focused customer storefront: Next.js (App Router), Clerk, Paystack.
 - `npm run test:e2e` Playwright smoke test (builds the app; uses a fake API)
 - `npm run typecheck`, `npm run lint`
 
+## Design system
+
+Adapted from `mobile/` (see `docs/superpowers/specs/2026-10-30-web-design-system-design.md`). Dark mode is the mobile palette; light mode follows the OS setting.
+
+- Colors live as CSS variables in `src/app/globals.css` and are exposed to Tailwind with the same names as mobile (`bg-surface`, `text-text-secondary`, `bg-primary`). Use `text-primary-text` for green text (it is darker in light mode) and `text-on-primary` on green fills.
+- Shared classes: `card`, `btn-primary`, `btn-secondary`, `icon-btn`, `icon-btn-primary`, `input`, `chip`.
+- Icons are Ionicons via `react-icons/io5`. Category artwork is in `public/categories/`.
+- Clerk and toast colors read the same CSS variables, so they follow the mode too.
+
 ## Notes
 
 - Public pages call `GET /api/public/*` on the backend and are cached with ISR (60s).

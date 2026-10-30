@@ -6,6 +6,14 @@ export interface SitemapEntry {
   lastModified?: string;
 }
 
+// A backslash followed by "u003c", which JSON parsers read back as "<".
+const ESCAPED_LT = `${String.fromCharCode(92)}u003c`;
+
+// "<" is escaped so product text can never close the surrounding <script> tag.
+export function serializeJsonLd(data: object) {
+  return JSON.stringify(data).replace(/</g, ESCAPED_LT);
+}
+
 export function productJsonLd(product: PublicProduct, siteUrl: string) {
   return {
     "@context": "https://schema.org",

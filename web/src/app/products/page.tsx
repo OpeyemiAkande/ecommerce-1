@@ -1,5 +1,7 @@
 import type {Metadata} from "next";
 import Link from "next/link";
+import {IoChevronBack, IoChevronForward, IoSearchOutline} from "react-icons/io5";
+import {CategoryTiles} from "@/components/CategoryTiles";
 import {ProductCard} from "@/components/ProductCard";
 import {SearchForm} from "@/components/SearchForm";
 import {fetchCategories, fetchProducts} from "@/lib/api/server";
@@ -36,32 +38,36 @@ export default async function ProductsPage({
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Shop</h1>
+        <p className="mt-1 text-sm text-text-secondary">Browse all products</p>
+      </div>
+
       <SearchForm defaultValue={q} category={category} />
 
-      <div className="flex flex-wrap gap-2 text-sm">
-        <Link
-          href={href({q})}
-          className={`rounded-full border px-3 py-1 ${!category ? "bg-neutral-900 text-white" : "bg-white"}`}
-        >
-          All
-        </Link>
-        {categories.map((name) => (
-          <Link
-            key={name}
-            href={href({q, category: name})}
-            className={`rounded-full border px-3 py-1 ${category === name ? "bg-neutral-900 text-white" : "bg-white"}`}
-          >
-            {name}
-          </Link>
-        ))}
+      <CategoryTiles
+        categories={categories}
+        selected={category}
+        hrefFor={(name) => href({q, category: name})}
+      />
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold">Products</h2>
+        <span className="text-sm text-text-secondary">
+          {data.total} {data.total === 1 ? "item" : "items"}
+        </span>
       </div>
 
       {data.products.length === 0 ? (
-        <p className="py-12 text-center text-neutral-600">
-          No products found.
-        </p>
+        <div className="flex flex-col items-center py-20 text-center">
+          <IoSearchOutline size={48} className="text-text-tertiary" />
+          <p className="mt-4 font-semibold">No products found</p>
+          <p className="mt-2 text-sm text-text-secondary">
+            Try adjusting your filters
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           {data.products.map((product) => (
             <ProductCard key={product._id} product={product} />
           ))}
@@ -69,18 +75,29 @@ export default async function ProductsPage({
       )}
 
       {data.pages > 1 && (
-        <nav className="flex items-center justify-center gap-4 text-sm">
+        <nav
+          aria-label="Pagination"
+          className="flex items-center justify-center gap-3 pt-2 text-sm"
+        >
           {page > 1 && (
-            <Link href={href({q, category, page: String(page - 1)})}>
-              ← Previous
+            <Link
+              href={href({q, category, page: String(page - 1)})}
+              className="btn-secondary !px-4 !py-2"
+            >
+              <IoChevronBack size={16} />
+              Previous
             </Link>
           )}
-          <span>
+          <span className="text-text-secondary">
             Page {data.page} of {data.pages}
           </span>
           {page < data.pages && (
-            <Link href={href({q, category, page: String(page + 1)})}>
-              Next →
+            <Link
+              href={href({q, category, page: String(page + 1)})}
+              className="btn-secondary !px-4 !py-2"
+            >
+              Next
+              <IoChevronForward size={16} />
             </Link>
           )}
         </nav>

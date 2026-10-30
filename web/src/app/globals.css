@@ -1,26 +1,115 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens, adapted from mobile/tailwind.config.js.
+ * Dark values are the mobile palette; light is the same green on light greys.
+ * Variables are plain CSS vars (not just @theme) so Clerk and sonner can use them.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  color-scheme: light dark;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background: #f4f5f4;
+  --background-light: #ffffff;
+  --background-lighter: #eceeec;
+  --surface: #ffffff;
+  --surface-light: #e8eae8;
+  --line: #e1e4e1;
+
+  --text-primary: #121212;
+  --text-secondary: #565a57;
+  --text-tertiary: #7c807d;
+
+  --primary: #1db954;
+  --primary-light: #1ed760;
+  --primary-dark: #1aa34a;
+  --primary-text: #12803a; /* green used as text; darker for contrast on white */
+  --on-primary: #121212; /* text on green fills, both modes */
+
+  --accent-red: #d93025;
+  --accent-yellow: #ffc107;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #121212;
+    --background-light: #181818;
+    --background-lighter: #282828;
+    --surface: #282828;
+    --surface-light: #3e3e3e;
+    --line: #333333;
+
+    --text-primary: #ffffff;
+    --text-secondary: #b3b3b3;
+    --text-tertiary: #6a6a6a;
+
+    --primary-text: #1db954;
+
+    --accent-red: #f44336;
   }
 }
 
+@theme inline {
+  --color-background: var(--background);
+  --color-background-light: var(--background-light);
+  --color-background-lighter: var(--background-lighter);
+  --color-surface: var(--surface);
+  --color-surface-light: var(--surface-light);
+  --color-line: var(--line);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-text: var(--primary-text);
+  --color-on-primary: var(--on-primary);
+  --color-accent-red: var(--accent-red);
+  --color-accent-yellow: var(--accent-yellow);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply bg-background font-sans text-text-primary antialiased;
+}
+
+/* Clerk's Apple logo is black; make it visible on the dark card. */
+@media (prefers-color-scheme: dark) {
+  .cl-providerIcon__apple {
+    filter: invert(1);
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-3xl border border-line bg-surface;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 font-bold text-on-primary transition hover:bg-primary-light active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-line bg-surface px-6 py-3.5 font-semibold text-text-primary transition hover:bg-surface-light active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .icon-btn {
+    @apply inline-flex size-9 items-center justify-center rounded-full bg-surface-light text-text-primary transition hover:opacity-80 active:scale-95 disabled:pointer-events-none disabled:opacity-40;
+  }
+
+  .icon-btn-primary {
+    @apply inline-flex size-9 items-center justify-center rounded-full bg-primary text-on-primary transition hover:bg-primary-light active:scale-95 disabled:pointer-events-none disabled:opacity-40;
+  }
+
+  .input {
+    @apply w-full rounded-2xl border border-line bg-surface px-5 py-4 text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary;
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full border border-line bg-surface px-4 py-1.5 text-sm font-medium text-text-primary transition hover:bg-surface-light;
+  }
+
+  .chip-active {
+    @apply border-primary bg-primary text-on-primary hover:bg-primary-light;
+  }
 }

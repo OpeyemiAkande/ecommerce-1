@@ -15,7 +15,18 @@ export function Providers({children}: {children: React.ReactNode}) {
   return (
     <QueryClientProvider client={client}>
       {children}
-      <Toaster richColors position="top-right" />
+      <Toaster
+        theme="system"
+        position="top-right"
+        style={
+          {
+            "--normal-bg": "var(--surface)",
+            "--normal-text": "var(--text-primary)",
+            "--normal-border": "var(--line)",
+            "--border-radius": "1rem"
+          } as React.CSSProperties
+        }
+      />
     </QueryClientProvider>
   );
 }
