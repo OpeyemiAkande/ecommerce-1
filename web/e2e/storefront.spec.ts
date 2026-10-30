@@ -35,9 +35,15 @@ test("sitemap lists products and robots points to it", async ({request}) => {
   const robots = await (await request.get("/robots.txt")).text();
   expect(robots).toContain("Sitemap:");
   expect(robots).toContain("Disallow: /cart");
+  expect(robots).toContain("Disallow: /admin");
 });
 
 test("cart requires sign-in", async ({page}) => {
   await page.goto("/cart");
+  await expect(page).toHaveURL(/sign-in/);
+});
+
+test("admin requires sign-in", async ({page}) => {
+  await page.goto("/admin/products");
   await expect(page).toHaveURL(/sign-in/);
 });
