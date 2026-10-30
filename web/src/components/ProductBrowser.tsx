@@ -31,6 +31,21 @@ export function ProductBrowser({
   const visible = isFiltering ? filterProducts(products, query) : products;
   const count = isFiltering ? visible.length : total;
 
+  function handleChange(next: string) {
+    setQuery(next);
+
+    // Emptying the box after a server search: the fetched list is a narrowed
+    // result, but an empty query means "everything", so fetch that instead.
+    if (next.trim() === "" && q.trim() !== "") {
+      router.replace(productsUrl({category}));
+      return;
+    }
+
+    // Otherwise keep the address bar in step with the box, so a reload shows
+    // what is typed. replaceState neither fetches nor adds history entries.
+    window.history.replaceState(null, "", productsUrl({q: next, category}));
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     router.push(productsUrl({q: query, category}));
@@ -41,7 +56,7 @@ export function ProductBrowser({
       <div className="space-y-2">
         <SearchForm
           value={query}
-          onChange={setQuery}
+          onChange={handleChange}
           onSubmit={handleSubmit}
           category={category}
         />

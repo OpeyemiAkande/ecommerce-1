@@ -1,11 +1,11 @@
 import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {beforeEach, describe, expect, it, vi} from "vitest";
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 import type {PublicProduct} from "@/lib/types";
 import {ProductBrowser} from "./ProductBrowser";
 
-const push = vi.hoisted(() => vi.fn());
-vi.mock("next/navigation", () => ({useRouter: () => ({push})}));
+const router = vi.hoisted(() => ({push: vi.fn(), replace: vi.fn()}));
+vi.mock("next/navigation", () => ({useRouter: () => router}));
 vi.mock("@/components/ProductCard", () => ({
   ProductCard: ({product}: {product: PublicProduct}) => (
     <div data-testid="card">{product.name}</div>
@@ -34,7 +34,15 @@ const fetched = [
 
 const names = () => screen.queryAllByTestId("card").map((c) => c.textContent);
 
-beforeEach(() => push.mockReset());
+let replaceState: ReturnType<typeof vi.spyOn>;
+
+beforeEach(() => {
+  router.push.mockReset();
+  router.replace.mockReset();
+  replaceState = vi.spyOn(window.history, "replaceState");
+});
+
+afterEach(() => replaceState.mockRestore());
 
 describe("ProductBrowser", () => {
   it("filters the fetched list as you type, without a request", async () => {
@@ -46,7 +54,7 @@ describe("ProductBrowser", () => {
     await user.type(screen.getByRole("searchbox"), "key");
 
     expect(names()).toEqual(["Mechanical Keyboard"]);
-    expect(push).not.toHaveBeenCalled();
+    expect(router.push).not.toHaveBeenCalled();
     expect(screen.getByText("1 item")).toBeInTheDocument();
   });
 
@@ -66,22 +74,63 @@ describe("ProductBrowser", () => {
     await user.clear(box);
     expect(names()).toEqual(["Sneakers", "Mechanical Keyboard", "Headphones"]);
     expect(screen.getByText("3 items")).toBeInTheDocument();
-    expect(push).not.toHaveBeenCalled();
+    expect(router.push).not.toHaveBeenCalled();
   });
 
-  it("clearing after a server search shows that search's fetched list again", async () => {
+  it("keeps the address bar in sync while typing, without navigating", async () => {
+    const user = userEvent.setup();
+    render(
+      <ProductBrowser products={fetched} total={3} category="Sports" />
+    );
+
+    await user.type(screen.getByRole("searchbox"), "key");
+
+    expect(replaceState).toHaveBeenLastCalledWith(
+      null,
+      "",
+      "/products?q=key&category=Sports"
+    );
+    expect(router.push).not.toHaveBeenCalled();
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  it("removes q from the address bar when the box is emptied", async () => {
+    const user = userEvent.setup();
+    render(<ProductBrowser products={fetched} total={3} />);
+
+    await user.type(screen.getByRole("searchbox"), "key");
+    await user.clear(screen.getByRole("searchbox"));
+
+    expect(replaceState).toHaveBeenLastCalledWith(null, "", "/products");
+    // Nothing narrowed was fetched, so there is nothing to re-fetch.
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  it("clearing after a server search fetches the unfiltered list and drops q from the URL", async () => {
     const user = userEvent.setup();
     // The page was loaded with ?q=shoe, so the fetched list is just Sneakers.
     render(
-      <ProductBrowser products={[fetched[0]]} total={1} q="shoe" />
+      <ProductBrowser products={[fetched[0]]} total={1} q="shoe" category="Sports" />
     );
 
     expect(screen.getByRole("searchbox")).toHaveValue("shoe");
 
     await user.clear(screen.getByRole("searchbox"));
 
-    expect(names()).toEqual(["Sneakers"]);
-    expect(push).not.toHaveBeenCalled();
+    // An empty query means "everything", which the narrowed list can't show.
+    expect(router.replace).toHaveBeenCalledWith("/products?category=Sports");
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("deleting part of a server search filters locally and updates the URL", async () => {
+    const user = userEvent.setup();
+    render(<ProductBrowser products={[fetched[0]]} total={1} q="shoe" />);
+
+    await user.type(screen.getByRole("searchbox"), "{Backspace}");
+
+    expect(screen.getByRole("searchbox")).toHaveValue("sho");
+    expect(replaceState).toHaveBeenLastCalledWith(null, "", "/products?q=sho");
+    expect(router.replace).not.toHaveBeenCalled();
   });
 
   it("sends a fresh request when Search is clicked", async () => {
@@ -93,7 +142,7 @@ describe("ProductBrowser", () => {
     await user.type(screen.getByRole("searchbox"), "key");
     await user.click(screen.getByRole("button", {name: "Search"}));
 
-    expect(push).toHaveBeenCalledWith("/products?q=key&category=Sports");
+    expect(router.push).toHaveBeenCalledWith("/products?q=key&category=Sports");
   });
 
   it("clicking Search with an empty box requests the unfiltered list", async () => {
@@ -103,7 +152,7 @@ describe("ProductBrowser", () => {
     await user.clear(screen.getByRole("searchbox"));
     await user.click(screen.getByRole("button", {name: "Search"}));
 
-    expect(push).toHaveBeenCalledWith("/products");
+    expect(router.push).toHaveBeenCalledWith("/products");
   });
 
   it("submits with Enter too", async () => {
@@ -112,7 +161,7 @@ describe("ProductBrowser", () => {
 
     await user.type(screen.getByRole("searchbox"), "head{Enter}");
 
-    expect(push).toHaveBeenCalledWith("/products?q=head");
+    expect(router.push).toHaveBeenCalledWith("/products?q=head");
   });
 
   it("shows an empty state that points to the full search", async () => {
