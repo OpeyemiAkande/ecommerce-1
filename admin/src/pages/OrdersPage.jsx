@@ -1,5 +1,6 @@
 import {orderApi} from "../lib/api";
-import {formatDate} from "../lib/utils";
+import {formatDate, getErrorMessage} from "../lib/utils";
+import {toast} from "../lib/toast";
 
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 
@@ -13,9 +14,13 @@ function OrdersPage() {
 
   const updateStatusMutation = useMutation({
     mutationFn: orderApi.updateStatus,
-    onSuccess: () => {
+    onSuccess: (_, {status}) => {
       queryClient.invalidateQueries({queryKey: ["orders"]});
       queryClient.invalidateQueries({queryKey: ["dashboardStats"]});
+      toast.success(`Order marked as ${status}`);
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Failed to update order status"));
     }
   });
 
