@@ -13,7 +13,7 @@ SEO-focused customer storefront and admin dashboard: Next.js (App Router), Clerk
 
 ## Admin
 
-The admin dashboard lives at `/admin` (dashboard, products, orders, customers). It uses the same Clerk app as the storefront and calls `/api/admin/*`; the backend only allows the user whose email is `ADMIN_EMAIL`. Other signed-in users see a "You don't have access" screen. `/admin` is noindex and disallowed in `robots.txt`.
+The admin dashboard lives at `/admin` (dashboard, products, orders, customers). It uses the same Clerk app as the storefront and calls `/api/admin/*`; the backend only allows the user whose email is `ADMIN_EMAIL`. Access is checked on the server before any admin page renders: the layout asks the backend (`GET /api/admin/me`) and, for anyone who isn't the admin, responds with a real 403 and the custom `src/app/forbidden.tsx` page (this uses Next's `experimental.authInterrupts`). A backend outage shows the error page, not the 403 page. `/admin` is noindex and disallowed in `robots.txt`.
 
 Env mapping from the old Vite admin: `VITE_CLERK_PUBLISHABLE_KEY` -> `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `VITE_API_URL` -> `NEXT_PUBLIC_API_URL`, `VITE_SENTRY_DSN` -> `NEXT_PUBLIC_SENTRY_DSN`, `VITE_SENTRY_REPLAY_SESSION_SAMPLE_RATE` -> `NEXT_PUBLIC_SENTRY_REPLAY_SESSION_SAMPLE_RATE`.
 

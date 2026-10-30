@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
   // Don't advertise the framework.
   poweredByHeader: false,
+  // Enables forbidden() and forbidden.tsx (a real 403 page).
+  experimental: {authInterrupts: true},
   images: {
     remotePatterns: [
       {protocol: "https", hostname: "images.unsplash.com"},
