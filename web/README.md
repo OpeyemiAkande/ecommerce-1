@@ -46,4 +46,4 @@ Adapted from `mobile/` (see `docs/superpowers/specs/2026-10-30-web-design-system
 - `src/lib/pricing.ts` mirrors `backend/src/lib/pricing.js` (shipping and tax). The server is authoritative; keep both in sync.
 - `src/pages/500.tsx` exists only because App Router error boundaries don't cover a failed first render of an ISR route.
 - Deploy separately (e.g. Vercel) with the same env vars as `.env.example`.
-- Sentry runs in the browser only when `NEXT_PUBLIC_SENTRY_DSN` is set; its ingest host is added to the CSP from that DSN.
+- Sentry is loaded only inside `/admin` (lazily, so the storefront bundle stays small) and only when `NEXT_PUBLIC_SENTRY_DSN` is set; its ingest host is added to the CSP from that DSN.

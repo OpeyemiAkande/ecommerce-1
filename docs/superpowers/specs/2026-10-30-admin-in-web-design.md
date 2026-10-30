@@ -47,7 +47,7 @@ Serve the admin dashboard from the Next.js app under `/admin`, so one app hosts 
 
 ## 5. Monitoring, config, security
 
-- `@sentry/react` becomes `@sentry/nextjs`; DSN and replay sample rate are `NEXT_PUBLIC_SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_REPLAY_SESSION_SAMPLE_RATE`. Sentry is skipped when no DSN is set.
+- `@sentry/react` becomes `@sentry/nextjs`; DSN and replay sample rate are `NEXT_PUBLIC_SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_REPLAY_SESSION_SAMPLE_RATE`. Sentry is skipped when no DSN is set, and it is loaded lazily from the admin shell (not `instrumentation-client.ts`) so the storefront bundle does not grow.
 - `securityHeaders.ts` adds Sentry's ingest origin (from the DSN) to `connect-src`.
 - Env mapping: `VITE_CLERK_PUBLISHABLE_KEY` -> `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `VITE_API_URL` -> `NEXT_PUBLIC_API_URL`. `.env.example` and README updated.
 - Backend `CLIENT_URL` already needs the web origin for CORS; no change.

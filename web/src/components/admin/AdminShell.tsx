@@ -5,6 +5,7 @@ import {usePathname} from "next/navigation";
 import {useEffect, useState} from "react";
 import {UserButton, useUser} from "@clerk/nextjs";
 import {IoBagHandle, IoMenu, IoStorefrontOutline} from "react-icons/io5";
+import {initSentry} from "@/lib/admin/sentry";
 import {AdminGate} from "./AdminGate";
 import {ADMIN_NAV} from "./nav";
 
@@ -13,6 +14,10 @@ export function AdminShell({children}: {children: React.ReactNode}) {
   const {user} = useUser();
   const [open, setOpen] = useState(false);
   const title = ADMIN_NAV.find((item) => pathname.startsWith(item.href))?.name ?? "Admin";
+
+  useEffect(() => {
+    initSentry();
+  }, []);
 
   // Close the mobile drawer after navigating.
   useEffect(() => {
