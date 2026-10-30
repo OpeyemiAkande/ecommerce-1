@@ -16,6 +16,9 @@ const router = Router();
 
 router.use(protectRoute, adminOnly);
 
+// Cheap "am I an admin?" check; the web app calls it before rendering /admin.
+router.get("/me", (_req, res) => res.status(200).json({ok: true}));
+
 router.post("/products", upload.array("images", 3), createProduct);
 router.get("/products", getAllProducts);
 router.put("/products/:id", upload.array("images", 3), updateProduct);

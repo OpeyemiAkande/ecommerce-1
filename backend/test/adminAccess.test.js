@@ -104,7 +104,21 @@ const adminRouteList = adminRoutes.stack
   );
 
 test("the admin router exposes the expected routes", () => {
-  assert.equal(adminRouteList.length, 8);
+  assert.equal(adminRouteList.length, 9);
+});
+
+test("GET /me tells the admin they have access and nobody else", async () => {
+  await withAdminApp(async (base) => {
+    const admin = await fetch(`${base}/me`, {headers: {"x-test-user": "admin_id"}});
+    assert.equal(admin.status, 200);
+    assert.deepEqual(await admin.json(), {ok: true});
+
+    const shopper = await fetch(`${base}/me`, {headers: {"x-test-user": "shopper_id"}});
+    assert.equal(shopper.status, 403);
+
+    const signedOut = await fetch(`${base}/me`);
+    assert.equal(signedOut.status, 401);
+  });
 });
 
 test("no admin route answers a signed-out request", async () => {
