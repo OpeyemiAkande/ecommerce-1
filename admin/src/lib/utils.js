@@ -22,6 +22,13 @@ export const getStockStatusBadge = (stock) => {
   return {text: "In Stock", class: "badge-success"};
 };
 
+// The API replies with {message} or {error}; fall back for network failures etc.
+export const getErrorMessage = (error, fallback = "Something went wrong") =>
+  error?.response?.data?.message ||
+  error?.response?.data?.error ||
+  error?.message ||
+  fallback;
+
 export const formatDate = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);

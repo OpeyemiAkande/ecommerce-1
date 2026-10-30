@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {productApi} from "../lib/api";
-import {getStockStatusBadge} from "../lib/utils";
+import {getErrorMessage, getStockStatusBadge} from "../lib/utils";
+import {toast} from "../lib/toast";
 
 function ProductsPage() {
   const [showModal, setShowModal] = useState(false);
@@ -34,25 +35,37 @@ function ProductsPage() {
 
   const createProductMutation = useMutation({
     mutationFn: productApi.create,
-    onSuccess: () => {
+    onSuccess: (product) => {
       closeModal();
       queryClient.invalidateQueries({queryKey: ["products"]});
+      toast.success(`"${product.name}" was added`);
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Failed to add product"));
     }
   });
 
   const updateProductMutation = useMutation({
     mutationFn: productApi.update,
-    onSuccess: () => {
+    onSuccess: (product) => {
       closeModal();
       queryClient.invalidateQueries({queryKey: ["products"]});
+      toast.success(`"${product.name}" was updated`);
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Failed to update product"));
     }
   });
 
   const deleteProductMutation = useMutation({
     mutationFn: productApi.delete,
     onSuccess: () => {
+      toast.success(`"${productToDelete?.name}" was deleted`);
       setProductToDelete(null);
       queryClient.invalidateQueries({queryKey: ["products"]});
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Failed to delete product"));
     }
   });
 
@@ -96,7 +109,7 @@ function ProductsPage() {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length > 3) return alert("Maximum 3 images allowed");
+    if (files.length > 3) return toast.error("Maximum 3 images allowed");
 
     imagePreviews.forEach((url) => {
       if (url.startsWith("blob:")) URL.revokeObjectURL(url);
@@ -110,7 +123,7 @@ function ProductsPage() {
     e.preventDefault();
 
     if (!editingProduct && imagePreviews.length === 0) {
-      return alert("Please upload at least one image");
+      return toast.error("Please upload at least one image");
     }
 
     const formDataToSend = new FormData();
@@ -444,12 +457,6 @@ function ProductsPage() {
                   action cannot be undone.
                 </p>
               </div>
-
-              {deleteProductMutation.isError && (
-                <p className="text-sm text-error">
-                  Failed to delete the product. Please try again.
-                </p>
-              )}
             </div>
           )}
 

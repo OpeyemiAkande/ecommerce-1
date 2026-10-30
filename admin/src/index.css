@@ -2,3 +2,9 @@
 @plugin "daisyui" {
   themes: forest;
 }
+
+/* Forest's default error red is very saturated; mute it app-wide
+   (btn-error, text-error, alert-error, badge-error). */
+[data-theme="forest"] {
+  --color-error: oklch(66% 0.13 22);
+}
