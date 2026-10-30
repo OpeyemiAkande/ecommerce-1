@@ -41,7 +41,7 @@ Serve the admin dashboard from the Next.js app under `/admin`, so one app hosts 
 
 ## 4. UI
 
-- `globals.css` gains the missing shared classes: `table`, `badge` (+ success/info/warning/error variants using existing tokens), `select`, `textarea`, `modal`, `stat`.
+- `globals.css` gains the missing shared classes: `table`, `badge` (+ success/info/warning/error/ghost tones using existing tokens), `select`, `textarea`. The modal is a React component and stat tiles are plain `card`s.
 - Lucide icons are mapped to Ionicons.
 - Sidebar active state is derived from `usePathname()`.
 
