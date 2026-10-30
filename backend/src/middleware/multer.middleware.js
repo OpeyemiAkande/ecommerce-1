@@ -1,5 +1,6 @@
 import multer from "multer";
 import path from "path";
+import fs from "fs/promises";
 
 const storage = multer.diskStorage({
   filename: (req, file, cb) => {
@@ -20,12 +21,23 @@ const fileFilter = (req, file, cb) => {
   if (extname && mimeType) {
     cb(null, true);
   } else {
-    cb(new Error("Only image files are allowed (jpeg,jpg,png,webp"));
+    cb(new Error("Only image files are allowed (jpeg,jpg,png,webp)"));
   }
 };
 
 export const upload = multer({
   storage,
   fileFilter,
-  limits: {fieldSize: 5 * 1024 * 1024} // 5MB limit
+  limits: {fileSize: 5 * 1024 * 1024} // 5MB limit per file
 });
+
+// Multer writes uploads to disk; call this once they've been sent to Cloudinary.
+export async function removeTempFiles(files = []) {
+  await Promise.all(
+    files.map((file) =>
+      fs.unlink(file.path).catch((error) => {
+        console.error("Failed to remove temp file:", file.path, error.message);
+      })
+    )
+  );
+}

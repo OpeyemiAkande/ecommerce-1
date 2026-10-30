@@ -15,14 +15,12 @@ if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key");
 }
 
-console.log(PUBLISHABLE_KEY);
 const queryClient = new QueryClient();
 
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
-  // Setting this option to true will send default PII data to Sentry.
-  // For example, automatic IP address collection on events
-  sendDefaultPii: true,
+  // Keep default PII (e.g. IP addresses) out of Sentry events
+  sendDefaultPii: false,
   enableLogs: true,
 
   integrations: [Sentry.replayIntegration()],

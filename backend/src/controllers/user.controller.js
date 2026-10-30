@@ -52,7 +52,8 @@ export async function getAddresses(req, res) {
 
     res.status(200).json({addresses: user.addresses});
   } catch (error) {
-    console.error("Error in addresses");
+    console.error("Error in getAddresses controller: ", error);
+    res.status(500).json({error: "Internal server error"});
   }
 }
 
@@ -74,7 +75,7 @@ export async function updateAddress(req, res) {
     const address = user.addresses.id(addressId);
 
     if (!address) {
-      return req.status(404).json({error: "Address not found"});
+      return res.status(404).json({error: "Address not found"});
     }
 
     if (isDefault) {
@@ -127,9 +128,6 @@ export async function addToWishlist(req, res) {
     const {productId} = req.body;
     const user = req.user;
 
-    // console.log("****************************************");
-    // console.log(user.wishlist, productId);
-    // console.log("****************************************");
     if (user.wishlist.includes(productId)) {
       return res.status(400).json({error: "Product already in wishlist"});
     }
