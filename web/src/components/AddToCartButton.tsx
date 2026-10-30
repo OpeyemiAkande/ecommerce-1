@@ -19,7 +19,7 @@ export function AddToCartButton({
 
   function handleClick() {
     if (!isSignedIn) {
-      router.push(`/sign-in?redirect_url=${encodeURIComponent(pathname)}`);
+      router.push(`/sign-in?redirect_url=${encodeURIComponent(pathname ?? "/")}`);
       return;
     }
 

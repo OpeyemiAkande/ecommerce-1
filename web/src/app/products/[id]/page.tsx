@@ -11,6 +11,13 @@ export const revalidate = 60;
 
 type Props = {params: Promise<{id: string}>};
 
+// No pages are pre-built (the build must not depend on the API); exporting
+// this opts the route into on-demand ISR, so each product is rendered on first
+// request and then cached for `revalidate` seconds.
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({params}: Props): Promise<Metadata> {
   const {id} = await params;
   const product = await fetchProduct(id);

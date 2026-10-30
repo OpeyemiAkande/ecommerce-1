@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Web storefront
 
-## Getting Started
+SEO-focused customer storefront: Next.js (App Router), Clerk, Paystack.
 
-First, run the development server:
+## Setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. `cp .env.example .env.local` and fill in the Clerk keys (same Clerk app as `backend/` and `mobile/`).
+2. Backend `.env` needs:
+   - `CLIENT_URL` including this app's origin, comma-separated (e.g. `http://localhost:5173,http://localhost:3000`)
+   - `WEB_URL` = this app's public URL (Paystack returns the customer here)
+   - `PAYSTACK_SECRET_KEY` (use a test key locally)
+3. `npm install && npm run dev` (http://localhost:3000)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `npm test` unit tests (Vitest)
+- `npm run test:e2e` Playwright smoke test (builds the app; uses a fake API)
+- `npm run typecheck`, `npm run lint`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Notes
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Public pages call `GET /api/public/*` on the backend and are cached with ISR (60s).
+- Cart, checkout and account pages are client-side and call the authenticated API with the Clerk token.
+- `src/lib/pricing.ts` mirrors `backend/src/lib/pricing.js` (shipping and tax). The server is authoritative; keep both in sync.
+- `src/pages/500.tsx` exists only because App Router error boundaries don't cover a failed first render of an ISR route.
+- Deploy separately (e.g. Vercel) with the same env vars as `.env.example`.
