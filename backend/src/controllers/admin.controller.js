@@ -16,7 +16,7 @@ export async function createProduct(req, res) {
     }
 
     if (req.files.length > 3) {
-      return res.status(400).json({message: "Maximum 3 images alloed"});
+      return res.status(400).json({message: "Maximum 3 images allowed"});
     }
 
     const uploadPromises = req.files.map((file) => {
@@ -33,7 +33,7 @@ export async function createProduct(req, res) {
       name,
       description,
       price: parseFloat(price),
-      stock: parse(stock),
+      stock: parseInt(stock),
       category,
       images: imageUrls
     });
@@ -41,7 +41,7 @@ export async function createProduct(req, res) {
     res.status(201).json(product);
   } catch (error) {
     console.error("Error creating product: ", error);
-    res.status(500).json({message: "Interval server error"});
+    res.status(500).json({message: "Internal server error"});
   }
 }
 
@@ -72,7 +72,7 @@ export async function updateProduct(req, res) {
     if (category) product.category = category;
 
     if (req.files && req.files.length > 0) {
-      if (req.files.length > 0) {
+      if (req.files.length > 3) {
         return res.status(400).json({message: "Maximum 3 images allowed"});
       }
 
