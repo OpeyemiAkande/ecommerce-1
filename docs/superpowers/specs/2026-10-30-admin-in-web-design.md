@@ -33,7 +33,7 @@ Serve the admin dashboard from the Next.js app under `/admin`, so one app hosts 
 ## 3. Data layer
 
 - `createApiClient` (web/src/lib/api/client.ts) sends `FormData` bodies as-is (no JSON content type, no `JSON.stringify`) and gains `patch`.
-- `src/lib/admin/api.ts` replaces `admin/src/lib/api.js`: same endpoints (`/admin/products`, `/admin/orders`, `/admin/orders/:id/status`, `/admin/stats`, `/admin/customers`) over `useApi()`. Query keys unchanged: `products`, `orders`, `dashboardStats`, `customers`.
+- `src/lib/admin/api.ts` replaces `admin/src/lib/api.js`: same endpoints (`/admin/products`, `/admin/orders`, `/admin/orders/:id/status`, `/admin/stats`, `/admin/customers`) over `useApi()`. Query keys: `products`, `dashboardStats`, `customers` as before, and `["admin", "orders"]` for orders (the storefront already uses `["orders"]` with a different shape on the same QueryClient).
 - `src/lib/admin/types.ts` types product, order, customer and stats.
 - `src/lib/admin/utils.ts` ports `capitalizeText`, `getOrderStatusBadge`, `getStockStatusBadge`, `formatDate`, `getErrorMessage` (error messages come from `ApiError.message`).
 - Products page is split: list, `ProductFormModal`, `DeleteProductModal`.
