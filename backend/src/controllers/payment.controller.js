@@ -3,6 +3,7 @@ import {ENV} from "../config/env.js";
 import {Product} from "../models/product.model.js";
 import {Order} from "../models/order.model.js";
 import crypto from "crypto";
+import {resolveCallbackUrl} from "../lib/paymentCallback.js";
 import {
   calculateTotal,
   isValidQuantity,
@@ -37,7 +38,7 @@ async function fulfillOrder(reference) {
 
 export async function initializePayment(req, res) {
   try {
-    const {cartItems, shippingAddress} = req.body;
+    const {cartItems, shippingAddress, platform} = req.body;
     const user = req.user;
 
     if (!cartItems || cartItems.length === 0) {
@@ -88,6 +89,15 @@ export async function initializePayment(req, res) {
 
     const reference = `order_${Date.now()}_${user._id}`;
 
+    // Resolved before the pending order is created so a config error never
+    // leaves an orphaned order behind.
+    const callbackUrl = resolveCallbackUrl({
+      platform,
+      reference,
+      webUrl: ENV.WEB_URL,
+      ngrokUrl: ENV.NGROK_URL
+    });
+
     // Store the pending order before payment so verify/webhook can find it
     const order = await Order.create({
       user: user._id,
@@ -116,7 +126,7 @@ export async function initializePayment(req, res) {
             shippingAddress,
             totalPrice: total
           },
-          callback_url: `${ENV.NGROK_URL}/api/payments/payment-success?reference=${reference}`
+          callback_url: callbackUrl
         },
         {
           headers: {
